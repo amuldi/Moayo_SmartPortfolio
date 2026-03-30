@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 100">
+  <!-- Icon: tapered upward curve (18×18 to 82×82 region within 0–100 square) -->
+  <path
+    d="M 18,82 C 22,54 56,18 76,12 A 16,16 0 0,1 88,42 C 62,50 26,70 22,84 Z"
+    fill="#5BA3CF"/>
+
+  <!-- Wordmark -->
+  <text
+    x="108" y="62"
+    font-family="'Pretendard', 'Apple SD Gothic Neo', 'Inter', system-ui, sans-serif"
+    font-size="34"
+    font-weight="700"
+    fill="#2C2C2C"
+    letter-spacing="-0.5">Moay</text>
+
+  <text
+    x="201" y="62"
+    font-family="'Pretendard', 'Apple SD Gothic Neo', 'Inter', system-ui, sans-serif"
+    font-size="34"
+    font-weight="700"
+    fill="#5BA3CF"
+    letter-spacing="-0.5">o</text>
+</svg>

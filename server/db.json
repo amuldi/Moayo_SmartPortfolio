@@ -1,0 +1,145 @@
+{
+  "users": [
+    {
+      "id": "u-1774054195612",
+      "username": "전시훈",
+      "email": "undae2109@gmail.com",
+      "googleId": "117750843800871683625",
+      "emailVerified": true,
+      "createdAt": "2026-03-21T00:49:55.612Z"
+    }
+  ],
+  "portfolios": {
+    "u-1774012530462": {
+      "accounts": [],
+      "updatedAt": "2026-03-20T15:49:27.860Z"
+    },
+    "u-1774054195612": {
+      "accounts": [
+        {
+          "name": "ISA",
+          "type": "ISA",
+          "totalCapital": 2000000,
+          "id": "acc-1774054233303",
+          "holdings": [
+            {
+              "ticker": "459580",
+              "name": "TIGER 미국배당다우존스",
+              "sector": "미국주식",
+              "region": "미국",
+              "assetClass": "equity",
+              "allocation": 50,
+              "id": "h-1774055403679"
+            },
+            {
+              "ticker": "396520",
+              "name": "TIGER 리츠부동산인프라",
+              "sector": "리츠",
+              "region": "국내",
+              "assetClass": "equity",
+              "allocation": 30,
+              "id": "h-1774061103672"
+            },
+            {
+              "ticker": "161510",
+              "name": "PLUS 고배당주 (구 ARIRANG 고배당주)",
+              "sector": "국내배당",
+              "region": "국내",
+              "assetClass": "equity",
+              "allocation": 20,
+              "id": "h-1774075284835"
+            }
+          ]
+        },
+        {
+          "name": "종합",
+          "type": "BROKERAGE",
+          "totalCapital": 1500000,
+          "id": "acc-1774054253403",
+          "holdings": [
+            {
+              "ticker": "SCHG",
+              "name": "Schwab 미국대형성장주 ETF",
+              "sector": "미국주식",
+              "region": "미국",
+              "assetClass": "equity",
+              "allocation": 50,
+              "id": "h-1774061157321"
+            },
+            {
+              "ticker": "BOTZ",
+              "name": "Global X 로보틱스&AI ETF",
+              "sector": "AI·로봇",
+              "region": "글로벌",
+              "assetClass": "equity",
+              "allocation": 20,
+              "id": "h-1774061205904"
+            },
+            {
+              "ticker": "QQQM",
+              "name": "나스닥 100 ETF (미니)",
+              "sector": "미국주식",
+              "region": "미국",
+              "assetClass": "equity",
+              "allocation": 29.5,
+              "id": "h-1774073094317"
+            }
+          ]
+        },
+        {
+          "name": "연금저축",
+          "type": "PENSION",
+          "totalCapital": 500000,
+          "id": "acc-1774054264820",
+          "holdings": [
+            {
+              "ticker": "360750",
+              "name": "TIGER 미국S&P500",
+              "sector": "미국주식",
+              "region": "미국",
+              "assetClass": "equity",
+              "allocation": 60,
+              "id": "h-1774061229548"
+            },
+            {
+              "ticker": "453810",
+              "name": "KODEX 미국나스닥100",
+              "sector": "미국주식",
+              "region": "미국",
+              "assetClass": "equity",
+              "allocation": 40,
+              "id": "h-1774061243887"
+            }
+          ]
+        },
+        {
+          "name": "금",
+          "type": "GOLD",
+          "totalCapital": 1000000,
+          "id": "acc-1774075407717",
+          "holdings": [
+            {
+              "ticker": "GOLD-KRX-1KG",
+              "name": "금 현물 99.99% 1kg (KRX)",
+              "sector": "귀금속",
+              "region": "글로벌",
+              "assetClass": "commodity",
+              "allocation": 80,
+              "id": "h-1774075425650"
+            },
+            {
+              "ticker": "GOLD-KRX-100G",
+              "name": "금 현물 99.99% 100g (KRX)",
+              "sector": "귀금속",
+              "region": "글로벌",
+              "assetClass": "commodity",
+              "allocation": 20,
+              "id": "h-1774075436291"
+            }
+          ]
+        }
+      ],
+      "updatedAt": "2026-03-21T07:40:38.915Z"
+    }
+  }
+}
