@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { fetchQuotes } from '../services/stockAPI.js'
 import {
   DEFAULT_PORTFOLIO_PREFERENCES,
+  FX_RATES,
   normalizeAccount,
   normalizeHolding,
 } from '../features/portfolio/schema.js'
@@ -21,6 +22,49 @@ function buildSnapshotPayload(state) {
     recentTickers: state.recentTickers,
     updatedAt: Date.now(),
   }
+}
+
+function createSampleAccounts() {
+  const sampleAccounts = [
+    {
+      id: createId('account'),
+      name: 'ISA 장기 투자',
+      type: 'ISA',
+      totalCapital: 18000000,
+      memo: '절세계좌는 코어 ETF와 금 중심으로 유지',
+      holdings: [
+        { ticker: '360750', quantity: 260, avgPrice: 19120, category: 'ETF', targetWeight: 30, memo: '미국 주식 코어' },
+        { ticker: '069500', quantity: 210, avgPrice: 32750, category: 'ETF', targetWeight: 20, memo: '국내 코어' },
+        { ticker: '132030', quantity: 130, avgPrice: 16040, category: '원자재', targetWeight: 10, memo: '방어 자산' },
+      ],
+    },
+    {
+      id: createId('account'),
+      name: '연금저축 적립',
+      type: 'PENSION',
+      totalCapital: 12000000,
+      memo: '장기 적립과 방어 자산 유지',
+      holdings: [
+        { ticker: '305080', quantity: 260, avgPrice: 8710, category: '채권', targetWeight: 25, memo: '장기 채권 비중' },
+        { ticker: 'SCHD', quantity: 28, avgPrice: 76.8, currency: 'USD', category: '배당주', targetWeight: 20, memo: '배당 코어' },
+        { ticker: 'CASH', quantity: 2000, avgPrice: 1000, category: '현금성', targetWeight: 10, memo: '분할 매수 대기' },
+      ],
+    },
+    {
+      id: createId('account'),
+      name: '종합계좌 성장',
+      type: 'BROKERAGE',
+      totalCapital: 22000000,
+      memo: '고성장 자산은 일반 계좌에서 운용',
+      holdings: [
+        { ticker: '005930', quantity: 80, avgPrice: 67600, category: '국내주식', targetWeight: 10, memo: '국내 대표주' },
+        { ticker: 'QQQ', quantity: 18, avgPrice: 441.2, currency: 'USD', category: 'ETF', targetWeight: 18, memo: '미국 성장 ETF' },
+        { ticker: 'NVDA', quantity: 22, avgPrice: 102.4, currency: 'USD', category: '성장주', targetWeight: 12, memo: '고성장 개별주' },
+      ],
+    },
+  ]
+
+  return sampleAccounts.map(normalizeAccount)
 }
 
 function syncCurrentPortfolioSnapshot(state) {
@@ -90,7 +134,6 @@ const cached = readLocalState()
 
 const usePortfolioStore = create((set, get) => ({
   accounts: cached?.accounts || [],
-  isLoaded: Boolean(cached),
   livePrices: {},
   watchlist: cached?.watchlist || [],
   preferences: cached?.preferences || DEFAULT_PORTFOLIO_PREFERENCES,
@@ -121,14 +164,18 @@ const usePortfolioStore = create((set, get) => ({
       const next = { ...state.preferences, ...partial }
       const updated = { ...state, preferences: next, savedPortfolios: syncCurrentPortfolioSnapshot({ ...state, preferences: next }) }
       persistLocalState(updated)
-      return { preferences: next }
+      return { preferences: next, savedPortfolios: updated.savedPortfolios }
     }),
 
   resetPortfolioPreferences: () =>
     set((state) => {
-      const updated = { ...state, preferences: DEFAULT_PORTFOLIO_PREFERENCES }
+      const updated = {
+        ...state,
+        preferences: DEFAULT_PORTFOLIO_PREFERENCES,
+        savedPortfolios: syncCurrentPortfolioSnapshot({ ...state, preferences: DEFAULT_PORTFOLIO_PREFERENCES }),
+      }
       persistLocalState(updated)
-      return { preferences: DEFAULT_PORTFOLIO_PREFERENCES }
+      return { preferences: DEFAULT_PORTFOLIO_PREFERENCES, savedPortfolios: updated.savedPortfolios }
     }),
 
   saveLocalSnapshot: () => {
@@ -178,6 +225,44 @@ const usePortfolioStore = create((set, get) => ({
         preferences: DEFAULT_PORTFOLIO_PREFERENCES,
         savedPortfolios: nextState.savedPortfolios,
         hasUnsavedChanges: false,
+      }
+    }),
+
+  loadSamplePortfolio: () =>
+    set((state) => {
+      const accounts = createSampleAccounts()
+      const currentPortfolioId = createId('portfolio')
+      const currentPortfolioName = '예시 리밸런싱 포트폴리오'
+      const watchlist = [
+        { ticker: 'VT', name: '뱅가드 토탈 월드 스톡 ETF', addedAt: Date.now() - 1000 },
+        { ticker: 'TLT', name: '아이쉐어즈 미국채 20년+ ETF', addedAt: Date.now() },
+      ]
+      const recentTickers = ['QQQ', 'SCHD', 'TLT', '360750']
+      const nextState = {
+        ...state,
+        accounts,
+        currentPortfolioId,
+        currentPortfolioName,
+        watchlist,
+        recentTickers,
+        hasUnsavedChanges: false,
+        saveStatus: 'saved',
+        saveError: null,
+        lastSavedAt: Date.now(),
+      }
+      nextState.savedPortfolios = syncCurrentPortfolioSnapshot(nextState)
+      persistLocalState(nextState)
+      return {
+        accounts,
+        currentPortfolioId,
+        currentPortfolioName,
+        watchlist,
+        recentTickers,
+        hasUnsavedChanges: false,
+        saveStatus: 'saved',
+        saveError: null,
+        lastSavedAt: nextState.lastSavedAt,
+        savedPortfolios: nextState.savedPortfolios,
       }
     }),
 
@@ -489,7 +574,7 @@ const usePortfolioStore = create((set, get) => ({
     }),
 
   getAggregatedHoldings: () => {
-    const accounts = get().accounts
+    const { accounts, livePrices } = get()
     const map = new Map()
 
     accounts.forEach((account) => {
@@ -510,7 +595,21 @@ const usePortfolioStore = create((set, get) => ({
       })
     })
 
-    return Array.from(map.values())
+    const items = Array.from(map.values())
+
+    items.forEach((h) => {
+      const quote = livePrices[h.ticker]
+      const price = quote?.price ?? h.avgPrice ?? 0
+      const fxRate = FX_RATES[h.currency] || 1
+      h.value = price * h.quantity * fxRate
+    })
+
+    const totalValue = items.reduce((sum, h) => sum + h.value, 0)
+    items.forEach((h) => {
+      h.allocation = totalValue > 0 ? (h.value / totalValue) * 100 : 0
+    })
+
+    return items
   },
 }))
 

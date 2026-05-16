@@ -16,10 +16,12 @@ import { getQuote, getHistory, getChart, toSymbol } from './stockProvider.js'
 const __dirname  = dirname(fileURLToPath(import.meta.url))
 const app        = express()
 const PORT       = process.env.PORT       || 4000
+const IS_PROD    = process.env.NODE_ENV === 'production'
+const HOST       = process.env.HOST       || (IS_PROD ? '0.0.0.0' : '127.0.0.1')
 const JWT_SECRET = process.env.JWT_SECRET || 'portfolio-secret-key-2024'
 const APP_URL    = process.env.APP_URL    || 'http://localhost:3001'
-const DB_PATH    = join(__dirname, 'db.json')
-const IS_PROD    = process.env.NODE_ENV === 'production'
+const IS_VERCEL  = process.env.VERCEL === '1' || process.env.VERCEL === 'true'
+const DB_PATH    = process.env.DB_PATH || (IS_VERCEL ? join('/tmp', 'moayo-db.json') : join(__dirname, 'db.json'))
 
 // ─── CORS ─────────────────────────────────────────────────
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:3001,http://localhost:3000').split(',')
@@ -379,105 +381,6 @@ app.get('/api/portfolio/benchmarks', (_, res) => {
   })
 })
 
-// ─── HTTP + WebSocket 서버 ────────────────────────────────
-const server = createServer(app)
-const wss    = new WebSocketServer({ server, path: '/ws' })
-
-// Finnhub WebSocket 릴레이 ─────────────────────────────────
-let finnhubWs = null
-const clientSubs  = new Map()  // client WS → Set<ticker>
-const tickerSubs  = new Map()  // ticker   → Set<client WS>
-
-function subscribeFinnhub(ticker) {
-  if (finnhubWs?.readyState === WebSocket.OPEN) {
-    finnhubWs.send(JSON.stringify({ type: 'subscribe', symbol: toSymbol(ticker) }))
-  }
-}
-function unsubscribeFinnhub(ticker) {
-  if (finnhubWs?.readyState === WebSocket.OPEN) {
-    finnhubWs.send(JSON.stringify({ type: 'unsubscribe', symbol: toSymbol(ticker) }))
-  }
-}
-
-function ensureFinnhubWs() {
-  const apiKey = process.env.FINNHUB_API_KEY
-  if (!apiKey) return
-  if (finnhubWs && (finnhubWs.readyState === WebSocket.OPEN || finnhubWs.readyState === WebSocket.CONNECTING)) return
-
-  finnhubWs = new WebSocket(`wss://ws.finnhub.io?token=${apiKey}`)
-
-  finnhubWs.on('open', () => {
-    console.log('[WS] Finnhub 연결됨')
-    // 기존 구독 복원
-    for (const ticker of tickerSubs.keys()) subscribeFinnhub(ticker)
-  })
-
-  finnhubWs.on('message', (raw) => {
-    let msg
-    try { msg = JSON.parse(raw.toString()) } catch { return }
-    if (msg.type !== 'trade' || !Array.isArray(msg.data)) return
-
-    msg.data.forEach((trade) => {
-      const sym = (trade.s || '').toUpperCase()
-      for (const [ticker, clients] of tickerSubs) {
-        if (toSymbol(ticker).toUpperCase() === sym) {
-          const payload = JSON.stringify({ type: 'trade', ticker, price: trade.p, timestamp: trade.t, volume: trade.v })
-          clients.forEach((c) => {
-            if (c.readyState === WebSocket.OPEN) c.send(payload)
-          })
-        }
-      }
-    })
-  })
-
-  finnhubWs.on('close', () => {
-    console.log('[WS] Finnhub 연결 끊김 — 3초 후 재연결')
-    finnhubWs = null
-    if (tickerSubs.size > 0) setTimeout(ensureFinnhubWs, 3000)
-  })
-
-  finnhubWs.on('error', (err) => console.error('[WS] Finnhub 오류:', err.message))
-}
-
-function clientUnsubscribe(ws, ticker) {
-  clientSubs.get(ws)?.delete(ticker)
-  const subs = tickerSubs.get(ticker)
-  if (!subs) return
-  subs.delete(ws)
-  if (subs.size === 0) {
-    tickerSubs.delete(ticker)
-    unsubscribeFinnhub(ticker)
-  }
-}
-
-wss.on('connection', (ws) => {
-  clientSubs.set(ws, new Set())
-
-  ws.on('message', (raw) => {
-    let msg
-    try { msg = JSON.parse(raw.toString()) } catch { return }
-
-    if (msg.type === 'subscribe' && msg.ticker) {
-      const { ticker } = msg
-      clientSubs.get(ws)?.add(ticker)
-      if (!tickerSubs.has(ticker)) tickerSubs.set(ticker, new Set())
-      tickerSubs.get(ticker).add(ws)
-      ensureFinnhubWs()
-      subscribeFinnhub(ticker)
-    }
-
-    if (msg.type === 'unsubscribe' && msg.ticker) {
-      clientUnsubscribe(ws, msg.ticker)
-    }
-  })
-
-  ws.on('close', () => {
-    const tickers = [...(clientSubs.get(ws) || [])]
-    tickers.forEach((t) => clientUnsubscribe(ws, t))
-    clientSubs.delete(ws)
-  })
-})
-
 // ─── 글로벌 에러 핸들러 ───────────────────────────────────
 app.use((err, req, res, _next) => {
   console.error('[Error]', err.message)
@@ -485,7 +388,113 @@ app.use((err, req, res, _next) => {
   res.status(status).json({ error: IS_PROD ? '서버 오류가 발생했습니다' : err.message })
 })
 
-server.listen(PORT, () => {
-  console.log(`\nMoayo API  http://localhost:${PORT}`)
-  if (!IS_PROD && !transporter) console.log('[DEV] SMTP 미설정 — 인증 링크는 콘솔에 출력됩니다\n')
-})
+function attachRealtimeServer(server) {
+  const wss = new WebSocketServer({ server, path: '/ws' })
+  let finnhubWs = null
+  const clientSubs = new Map()
+  const tickerSubs = new Map()
+
+  function subscribeFinnhub(ticker) {
+    if (finnhubWs?.readyState === WebSocket.OPEN) {
+      finnhubWs.send(JSON.stringify({ type: 'subscribe', symbol: toSymbol(ticker) }))
+    }
+  }
+
+  function unsubscribeFinnhub(ticker) {
+    if (finnhubWs?.readyState === WebSocket.OPEN) {
+      finnhubWs.send(JSON.stringify({ type: 'unsubscribe', symbol: toSymbol(ticker) }))
+    }
+  }
+
+  function ensureFinnhubWs() {
+    const apiKey = process.env.FINNHUB_API_KEY
+    if (!apiKey) return
+    if (finnhubWs && (finnhubWs.readyState === WebSocket.OPEN || finnhubWs.readyState === WebSocket.CONNECTING)) return
+
+    finnhubWs = new WebSocket(`wss://ws.finnhub.io?token=${apiKey}`)
+
+    finnhubWs.on('open', () => {
+      console.log('[WS] Finnhub 연결됨')
+      for (const ticker of tickerSubs.keys()) subscribeFinnhub(ticker)
+    })
+
+    finnhubWs.on('message', (raw) => {
+      let msg
+      try { msg = JSON.parse(raw.toString()) } catch { return }
+      if (msg.type !== 'trade' || !Array.isArray(msg.data)) return
+
+      msg.data.forEach((trade) => {
+        const sym = (trade.s || '').toUpperCase()
+        for (const [ticker, clients] of tickerSubs) {
+          if (toSymbol(ticker).toUpperCase() === sym) {
+            const payload = JSON.stringify({ type: 'trade', ticker, price: trade.p, timestamp: trade.t, volume: trade.v })
+            clients.forEach((c) => {
+              if (c.readyState === WebSocket.OPEN) c.send(payload)
+            })
+          }
+        }
+      })
+    })
+
+    finnhubWs.on('close', () => {
+      console.log('[WS] Finnhub 연결 끊김 - 3초 후 재연결')
+      finnhubWs = null
+      if (tickerSubs.size > 0) setTimeout(ensureFinnhubWs, 3000)
+    })
+
+    finnhubWs.on('error', (err) => console.error('[WS] Finnhub 오류:', err.message))
+  }
+
+  function clientUnsubscribe(ws, ticker) {
+    clientSubs.get(ws)?.delete(ticker)
+    const subs = tickerSubs.get(ticker)
+    if (!subs) return
+    subs.delete(ws)
+    if (subs.size === 0) {
+      tickerSubs.delete(ticker)
+      unsubscribeFinnhub(ticker)
+    }
+  }
+
+  wss.on('connection', (ws) => {
+    clientSubs.set(ws, new Set())
+
+    ws.on('message', (raw) => {
+      let msg
+      try { msg = JSON.parse(raw.toString()) } catch { return }
+
+      if (msg.type === 'subscribe' && msg.ticker) {
+        const { ticker } = msg
+        clientSubs.get(ws)?.add(ticker)
+        if (!tickerSubs.has(ticker)) tickerSubs.set(ticker, new Set())
+        tickerSubs.get(ticker).add(ws)
+        ensureFinnhubWs()
+        subscribeFinnhub(ticker)
+      }
+
+      if (msg.type === 'unsubscribe' && msg.ticker) {
+        clientUnsubscribe(ws, msg.ticker)
+      }
+    })
+
+    ws.on('close', () => {
+      const tickers = [...(clientSubs.get(ws) || [])]
+      tickers.forEach((t) => clientUnsubscribe(ws, t))
+      clientSubs.delete(ws)
+    })
+  })
+}
+
+export function startServer(port = PORT, host = HOST) {
+  const server = createServer(app)
+  attachRealtimeServer(server)
+  server.listen(port, host, () => {
+    console.log(`\nMoayo API  http://${host}:${port}`)
+    if (!IS_PROD && !transporter) console.log('[DEV] SMTP 미설정 - 인증 링크는 콘솔에 출력됩니다\n')
+  })
+  return server
+}
+
+if (!IS_VERCEL) startServer()
+
+export default app

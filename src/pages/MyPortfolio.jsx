@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   FolderOpen, Pencil, Plus, RefreshCw, Save, Search, Star, Trash2,
 } from 'lucide-react'
@@ -177,6 +178,7 @@ export default function MyPortfolio() {
     resetPortfolioPreferences,
     renameCurrentPortfolio,
     createPortfolioWorkspace,
+    loadSamplePortfolio,
     loadPortfolioSnapshot,
     deletePortfolioSnapshot,
     addAccount,
@@ -244,14 +246,14 @@ export default function MyPortfolio() {
           <div>
             <h1 className="text-xl font-bold text-[var(--text-primary)]">내 포트폴리오</h1>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              계좌와 보유 종목을 정리하고 손익을 확인합니다.
+              현재 계좌를 입력하고 목표 비중까지 맞추면 바로 포트폴리오 조정안을 확인할 수 있습니다.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button
               variant="secondary"
               icon={FolderOpen}
-              onClick={() => createPortfolioWorkspace(prompt('새 포트폴리오 이름을 입력하세요.', '새 포트폴리오') || '새 포트폴리오')}
+              onClick={() => createPortfolioWorkspace('새 포트폴리오')}
             >
               새 포트폴리오
             </Button>
@@ -272,15 +274,15 @@ export default function MyPortfolio() {
         <SaveBanner saveStatus={saveStatus} saveError={saveError} lastSavedAt={lastSavedAt} />
 
         <Card>
-          <CardBody className="grid gap-4 lg:grid-cols-[1fr_280px]">
-            <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+          <CardBody className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
               <Input
                 label="포트폴리오 이름"
                 value={portfolioNameDraft}
                 onChange={(event) => setPortfolioNameDraft(event.target.value)}
                 onBlur={() => renameCurrentPortfolio(portfolioNameDraft)}
               />
-              <div className="flex items-end gap-2">
+              <div className="flex gap-2 md:pb-0.5">
                 <Button variant="secondary" icon={Save} onClick={() => renameCurrentPortfolio(portfolioNameDraft)}>
                   이름 저장
                 </Button>
@@ -310,15 +312,35 @@ export default function MyPortfolio() {
             <div className="mx-auto max-w-xl px-6">
             <p className="text-lg font-semibold text-[var(--text-primary)]">아직 등록된 계좌가 없습니다</p>
             <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-              계좌를 만든 뒤 종목을 추가하면 평가금액, 손익, 비중, 오늘 변동이 자동으로 연결됩니다.
+              계좌를 만든 뒤 종목과 목표 비중을 입력하면 현재 구조 진단과 리밸런싱 가이드가 자동으로 이어집니다.
             </p>
-            <Button className="mt-5" icon={Plus} onClick={() => setAccountModal({ open: true, account: null })}>
-              첫 계좌 만들기
-            </Button>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <Button icon={Plus} onClick={() => setAccountModal({ open: true, account: null })}>
+                바로 포트폴리오 진단받기
+              </Button>
+              <Button variant="secondary" onClick={loadSamplePortfolio}>
+                예시 포트폴리오 불러오기
+              </Button>
+            </div>
             </div>
           </Card>
         ) : (
           <>
+            <Card>
+              <CardBody className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">Fast Flow</p>
+                  <h2 className="mt-2 text-lg font-bold text-[var(--text-primary)]">입력이 끝났다면 포트폴리오 조정안까지 바로 확인하세요</h2>
+                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                    현재 비중, 목표 비중, 계좌 역할이 연결되어 있으면 어떤 자산을 줄이고 늘릴지 바로 계산할 수 있습니다.
+                  </p>
+                </div>
+                <Link to="/analysis" className="inline-flex">
+                  <Button>바로 포트폴리오 진단받기</Button>
+                </Link>
+              </CardBody>
+            </Card>
+
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {snapshot.accounts.map((account) => (
                 <AccountOverviewCard

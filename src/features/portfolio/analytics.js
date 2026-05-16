@@ -1,5 +1,6 @@
 import { ACCOUNT_TYPES, getAssetInfo, getHistoricalPrices } from '../../services/mockData.js'
 import { FX_RATES } from './schema.js'
+import { getRecommendationsForProfile } from './recommendationEngine.js'
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max)
@@ -128,6 +129,37 @@ function summarizeBy(items, key) {
     .sort((a, b) => b.amount - a.amount)
 }
 
+function summarizeBySector(items) {
+  const map = new Map()
+  items.forEach((item) => {
+    const label = item.sector || '기타'
+    map.set(label, (map.get(label) || 0) + item.marketValueKRW)
+  })
+  const total = items.reduce((sum, item) => sum + item.marketValueKRW, 0)
+  return Array.from(map.entries())
+    .map(([name, amount]) => ({
+      name,
+      value: total > 0 ? round((amount / total) * 100, 1) : 0,
+      amount,
+    }))
+    .sort((a, b) => b.amount - a.amount)
+}
+
+function detectOverlap(items) {
+  const duplicates = new Map()
+  items.forEach((item) => {
+    const key = `${item.market}-${item.sector}`
+    duplicates.set(key, [...(duplicates.get(key) || []), item])
+  })
+  return Array.from(duplicates.values())
+    .filter((group) => group.length >= 2)
+    .slice(0, 4)
+    .map((group) => ({
+      title: `${group[0].sector} 노출 중복`,
+      message: `${group.map((item) => item.name).join(', ')}이(가) 유사한 노출을 만들고 있습니다.`,
+    }))
+}
+
 function getDiversificationScore(holdings, byCategory, byMarket) {
   if (!holdings.length) return 0
   const largestWeight = Math.max(...holdings.map((holding) => holding.weight))
@@ -153,6 +185,235 @@ function buildRebalancingSuggestions(holdings) {
     }))
     .filter((item) => Math.abs(item.gap) >= 1)
     .sort((left, right) => Math.abs(right.gap) - Math.abs(left.gap))
+}
+
+function buildDiagnosis(snapshot) {
+  const issues = []
+  const biggestHolding = snapshot.biggestHolding
+  const topSector = snapshot.bySector[0]
+  const topMarket = snapshot.byMarket[0]
+
+  if (biggestHolding?.weight >= 30) {
+    issues.push({
+      title: '집중도 높음',
+      severity: 'high',
+      description: `${biggestHolding.name} 비중이 ${biggestHolding.weight.toFixed(1)}%입니다. 한 종목 영향이 포트폴리오 전체를 흔들 수 있습니다.`,
+    })
+  }
+  if (topSector?.value >= 45) {
+    issues.push({
+      title: '섹터 쏠림',
+      severity: 'medium',
+      description: `${topSector.name} 비중이 ${topSector.value.toFixed(1)}%로 높습니다. 업종 사이클 영향이 커질 수 있습니다.`,
+    })
+  }
+  if (topMarket?.value >= 70) {
+    issues.push({
+      title: '지역 편중',
+      severity: 'medium',
+      description: `${topMarket.name} 비중이 ${topMarket.value.toFixed(1)}%입니다. 환율과 한 시장 변동성에 노출됩니다.`,
+    })
+  }
+  if (!issues.length) {
+    issues.push({
+      title: '구조는 비교적 안정적',
+      severity: 'low',
+      description: '극단적인 집중도는 보이지 않지만 목표 비중과 계좌 역할 분리는 더 다듬을 수 있습니다.',
+    })
+  }
+
+  return issues
+}
+
+function buildPortfolioScore(snapshot, overlaps, accountConflicts) {
+  const concentrationPenalty = snapshot.biggestHolding?.weight >= 30 ? 12 : snapshot.biggestHolding?.weight >= 20 ? 6 : 0
+  const overlapPenalty = overlaps.length * 5
+  const accountPenalty = accountConflicts.length * 6
+  const cashBonus = snapshot.holdings.some((holding) => holding.category === '현금성' && holding.weight >= 3) ? 4 : 0
+  const marketBalanceBonus = snapshot.byMarket.length >= 3 ? 4 : snapshot.byMarket.length >= 2 ? 2 : 0
+  const rawScore = Math.round(snapshot.diversificationScore - concentrationPenalty - overlapPenalty - accountPenalty + cashBonus + marketBalanceBonus)
+
+  let label = '보완 필요'
+  let summary = '집중도와 계좌 역할 분리를 조금만 다듬으면 구조가 훨씬 안정됩니다.'
+
+  if (rawScore >= 85) {
+    label = '우수'
+    summary = '분산과 계좌 역할이 비교적 잘 맞아 있습니다. 미세 조정 위주로 접근하면 됩니다.'
+  } else if (rawScore >= 72) {
+    label = '양호'
+    summary = '큰 구조 문제는 적지만, 몇몇 비중과 계좌 역할을 정리하면 더 관리하기 쉬워집니다.'
+  } else if (rawScore >= 58) {
+    label = '보통'
+    summary = '성장·방어 자산이 섞여 있고 편중도 일부 보여서, 목표 비중 중심 재정리가 필요합니다.'
+  }
+
+  return {
+    value: clamp(rawScore, 0, 100),
+    label,
+    summary,
+  }
+}
+
+function buildStyleSummary(snapshot) {
+  const growthWeight = snapshot.holdings
+    .filter((holding) => ['성장주', '미국주식'].includes(holding.category) || holding.volatility >= 28)
+    .reduce((sum, holding) => sum + holding.weight, 0)
+  const incomeWeight = snapshot.holdings
+    .filter((holding) => ['배당주', '리츠', '채권', '현금성'].includes(holding.category))
+    .reduce((sum, holding) => sum + holding.weight, 0)
+  const cashWeight = snapshot.holdings
+    .filter((holding) => holding.category === '현금성')
+    .reduce((sum, holding) => sum + holding.weight, 0)
+
+  const tags = []
+  if (growthWeight >= 55) tags.push('성장 편향')
+  if (incomeWeight >= 35) tags.push('현금흐름 지향')
+  if (cashWeight >= 10) tags.push('대기 자금 확보')
+  if (snapshot.diversificationScore >= 72) tags.push('분산 양호')
+  if (snapshot.diversificationScore <= 55) tags.push('집중 관리 필요')
+
+  const summary =
+    growthWeight >= incomeWeight
+      ? `현재 구조는 성장 자산 비중이 ${growthWeight.toFixed(1)}%로 높아 수익 기회는 크지만 변동성 체감도도 큰 편입니다.`
+      : `현재 구조는 배당·채권·현금성 자산이 ${incomeWeight.toFixed(1)}%를 차지해 방어력은 있지만 성장 자산 노출은 다소 약합니다.`
+
+  return {
+    growthWeight,
+    incomeWeight,
+    cashWeight,
+    tags,
+    summary,
+  }
+}
+
+function buildAccountGuides(accounts) {
+  return accounts.map((account) => {
+    const highGrowth = account.holdings.filter((holding) => ['성장주', '미국주식'].includes(holding.category)).length
+    const incomeAssets = account.holdings.filter((holding) => ['배당주', '리츠', '채권'].includes(holding.category)).length
+    let role = '장기 적립 담당'
+    let note = '핵심 자산을 꾸준히 적립하는 기본 계좌로 유지하는 편이 좋습니다.'
+
+    if (account.type === 'ISA') {
+      role = '절세 담당'
+      note = '국내 상장 ETF와 장기 보유 자산을 우선 담아 절세 효율을 높이는 구조가 적합합니다.'
+    } else if (account.type === 'PENSION') {
+      role = '장기 적립 담당'
+      note = '연금저축은 회전보다 장기 적립형 ETF와 채권 비중을 안정적으로 가져가는 편이 좋습니다.'
+    } else if (highGrowth > incomeAssets) {
+      role = '성장 담당'
+      note = '고성장 자산 비중이 높습니다. 변동성이 큰 종목은 이 계좌에서 관리하고 절세 계좌에는 단순 ETF를 두는 편이 좋습니다.'
+    } else if (incomeAssets > 0) {
+      role = '배당 담당'
+      note = '배당형/방어형 자산 비중이 높습니다. 현금흐름 목적 자산을 이 계좌에 모으는 전략이 잘 맞습니다.'
+    }
+
+    const priority = account.holdings.some((holding) => Math.abs((holding.targetWeight || 0) - holding.weight) >= 5)
+      ? '우선 조정 필요'
+      : '유지 가능'
+
+    return {
+      accountId: account.id,
+      name: account.name,
+      type: account.type,
+      role,
+      priority,
+      note,
+    }
+  })
+}
+
+function buildAccountConflicts(accounts) {
+  return accounts
+    .filter((account) => {
+      const hasGrowth = account.holdings.some((holding) => ['성장주', '미국주식'].includes(holding.category))
+      const hasIncome = account.holdings.some((holding) => ['배당주', '리츠', '채권'].includes(holding.category))
+      return hasGrowth && hasIncome && account.holdings.length >= 3
+    })
+    .map((account) => ({
+      accountId: account.id,
+      title: `${account.name} 역할이 섞여 있습니다`,
+      description: '성장 자산과 배당·방어 자산이 함께 많아 계좌 목적이 흐려져 있습니다. 실행할 때는 코어 ETF와 장기 적립 자산부터 역할별로 다시 나누는 편이 좋습니다.',
+    }))
+}
+
+function buildProfileAdjustments(snapshot, recommendation, profile) {
+  const profileTone = {
+    growth: '성장 자산을 늘리되 개별 종목 편중은 줄이는 쪽이 맞습니다.',
+    balanced: '한쪽으로 치우치지 않게 코어 ETF와 방어 자산을 같이 맞추는 편이 좋습니다.',
+    income: '현금흐름 자산과 방어 자산을 늘리고 고변동 성장주는 줄이는 편이 맞습니다.',
+    aggressive: '공격적 구조를 유지하더라도 코어 자산과 현금 버퍼는 남겨두는 편이 좋습니다.',
+    defensive: '낙폭 방어를 위해 채권·금·현금성 자산을 충분히 확보하는 쪽이 맞습니다.',
+  }[profile] || '현재 구조를 단순화하고 목표 비중 중심으로 재정리하는 편이 좋습니다.'
+
+  const items = recommendation.majorChanges.slice(0, 4).map((change, index) => ({
+    id: `${change.ticker}-${index}`,
+    title: `${change.name} ${change.gap > 0 ? '확대' : '축소'}`,
+    reason: change.gap > 0
+      ? `${change.name} 비중이 목표 대비 ${change.gap.toFixed(1)}%p 부족합니다. ${profileTone}`
+      : `${change.name} 비중이 목표 대비 ${Math.abs(change.gap).toFixed(1)}%p 높습니다. ${profileTone}`,
+    priority: Math.abs(change.gap) >= 12 ? '높음' : Math.abs(change.gap) >= 7 ? '보통' : '낮음',
+  }))
+
+  if (!items.length) {
+    return [{
+      id: 'maintain',
+      title: '현재 구조 유지 가능',
+      reason: '현재 포트폴리오가 선택한 성향과 크게 어긋나지 않습니다. 큰 교체보다 소폭 리밸런싱으로 충분합니다.',
+      priority: '낮음',
+    }]
+  }
+
+  return items
+}
+
+function compareWithRecommendation(snapshot, recommendation) {
+  const current = new Map(snapshot.holdings.map((holding) => [holding.ticker, holding.weight]))
+  const changes = recommendation.composition.map((item) => ({
+    ...item,
+    currentWeight: current.get(item.ticker) || 0,
+    gap: item.weight - (current.get(item.ticker) || 0),
+  }))
+
+  const majorChanges = changes
+    .filter((item) => Math.abs(item.gap) >= 5)
+    .sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap))
+    .slice(0, 5)
+
+  return {
+    ...recommendation,
+    majorChanges,
+    comparison:
+      recommendation.composition.length >= 2
+        ? `${recommendation.composition[0].name}와 ${recommendation.composition[1].name} 중심으로 코어를 단순화합니다.`
+        : '핵심 자산 중심으로 구조를 다시 단순화합니다.',
+    summary: majorChanges.length
+      ? `${majorChanges[0].name} ${majorChanges[0].gap > 0 ? '확대' : '축소'}가 가장 큰 변화입니다.`
+      : '현재 구조와 유사해 전환 난이도가 낮습니다.',
+  }
+}
+
+
+export function buildPlanningWorkspace(snapshot, profile = 'balanced') {
+  const recommendations = getRecommendationsForProfile(profile).map((item) => compareWithRecommendation(snapshot, item))
+  const diagnosis = buildDiagnosis(snapshot)
+  const overlaps = detectOverlap(snapshot.holdings)
+  const accountGuides = buildAccountGuides(snapshot.accounts)
+  const styleSummary = buildStyleSummary(snapshot)
+  const accountConflicts = buildAccountConflicts(snapshot.accounts)
+  const selectedRecommendation = recommendations[0] || null
+  const portfolioScore = buildPortfolioScore(snapshot, overlaps, accountConflicts)
+  const profileAdjustments = selectedRecommendation ? buildProfileAdjustments(snapshot, selectedRecommendation, profile) : []
+
+  return {
+    diagnosis,
+    overlaps,
+    accountGuides,
+    accountConflicts,
+    recommendations,
+    styleSummary,
+    portfolioScore,
+    profileAdjustments,
+  }
 }
 
 export function buildPortfolioSnapshot(accounts = [], livePrices = {}) {
@@ -191,6 +452,7 @@ export function buildPortfolioSnapshot(accounts = [], livePrices = {}) {
 
   const byCategory = summarizeBy(weightedHoldings, 'category')
   const byMarket = summarizeBy(weightedHoldings, 'market')
+  const bySector = summarizeBySector(weightedHoldings)
   const byAccount = enrichedAccounts
     .map((account) => ({
       name: account.name,
@@ -227,6 +489,7 @@ export function buildPortfolioSnapshot(accounts = [], livePrices = {}) {
     topLosers,
     byCategory,
     byMarket,
+    bySector,
     byAccount,
     timeline,
     profitDistribution,

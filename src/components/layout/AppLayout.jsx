@@ -3,13 +3,13 @@ import { TopNav } from './TopNav.jsx'
 import usePortfolioStore from '../../store/portfolioStore.js'
 
 export function AppLayout({ children }) {
-  const { refreshPrices, accounts } = usePortfolioStore()
+  const { refreshPrices, accounts, watchlist } = usePortfolioStore()
 
   useEffect(() => {
     refreshPrices()
     const id = setInterval(refreshPrices, 60_000)
     return () => clearInterval(id)
-  }, [accounts.length])
+  }, [accounts.length, watchlist.length, refreshPrices])
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[var(--bg-primary)]">

@@ -30,7 +30,7 @@ function AppFallback() {
 export default function App() {
   const { applyAll } = useSettingsStore()
   const { token, isGuest } = useAuthStore()
-  useEffect(() => { applyAll() }, [])
+  useEffect(() => { applyAll() }, [applyAll])
 
   return (
     <Router>

@@ -10,7 +10,7 @@ import { BrandIcon } from '../ui/BrandIcon.jsx'
 const NAV = [
   { path: '/home',      label: '홈'           },
   { path: '/portfolio', label: '내 포트폴리오' },
-  { path: '/analysis',  label: '분석'          },
+  { path: '/analysis',  label: '리밸런싱'      },
   { path: '/settings',  label: '설정'          },
 ]
 

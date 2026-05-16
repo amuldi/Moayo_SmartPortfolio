@@ -5,8 +5,9 @@ import { Modal } from '../../components/ui/Modal.jsx'
 import { Button } from '../../components/ui/Button.jsx'
 import { Input, Select } from '../../components/ui/Input.jsx'
 import { ASSET_UNIVERSE, getAssetInfo } from '../../services/mockData.js'
-import { CATEGORY_OPTIONS, validateHoldingInput } from './schema.js'
+import { CATEGORY_OPTIONS, FX_RATES, validateHoldingInput } from './schema.js'
 import usePortfolioStore from '../../store/portfolioStore.js'
+import { formatCurrency, formatNumber } from '../../utils/formatters.js'
 
 const initialForm = {
   ticker: '',
@@ -42,6 +43,39 @@ function assetToForm(asset, holding) {
   }
 }
 
+function convertKrwBudgetToAssetCurrency(amountKrw, currency) {
+  const rate = FX_RATES[currency] || 1
+  return rate > 0 ? amountKrw / rate : amountKrw
+}
+
+function getSearchScore(asset, query) {
+  const value = query.trim().toLowerCase()
+  if (!value) return 0
+
+  const ticker = asset.ticker.toLowerCase()
+  const name = asset.name.toLowerCase()
+  const sector = asset.sector.toLowerCase()
+  const region = asset.region.toLowerCase()
+
+  let score = 0
+  if (ticker === value) score += 150
+  if (name === value) score += 140
+  if (ticker.startsWith(value)) score += 90
+  if (name.startsWith(value)) score += 80
+  if (ticker.includes(value)) score += 50
+  if (name.includes(value)) score += 45
+  if (sector.includes(value)) score += 20
+  if (region.includes(value)) score += 8
+
+  const goldKeywords = ['금', '골드', 'gold', 'gld', 'iau']
+  if (goldKeywords.some((keyword) => value.includes(keyword))) {
+    if (/(금|골드|gold|gld|iau)/i.test(asset.name) || /(gold|gld|iau|금)/i.test(asset.ticker)) score += 120
+    if (asset.assetClass === 'commodity') score += 40
+  }
+
+  return score
+}
+
 export function HoldingFormModal({
   open,
   holding,
@@ -72,16 +106,24 @@ export function HoldingFormModal({
 
   const results = useMemo(() => {
     const value = deferredQuery.trim().toLowerCase()
-    if (!value) return ASSET_UNIVERSE.slice(0, 12)
+    if (!value) return ASSET_UNIVERSE.slice(0, 16)
 
-    return ASSET_UNIVERSE.filter((asset) => {
-      return (
-        asset.ticker.toLowerCase().includes(value) ||
-        asset.name.toLowerCase().includes(value) ||
-        asset.sector.toLowerCase().includes(value)
-      )
-    }).slice(0, 12)
+    return ASSET_UNIVERSE
+      .map((asset) => ({ asset, score: getSearchScore(asset, value) }))
+      .filter(({ score }) => score > 0)
+      .sort((left, right) => right.score - left.score || left.asset.name.localeCompare(right.asset.name, 'ko'))
+      .slice(0, 16)
+      .map(({ asset }) => asset)
   }, [deferredQuery])
+
+  const targetBudgetKRW = accountTotalCapital * (Number(form.targetWeight || 0) / 100)
+  const targetBudgetInAssetCurrency = convertKrwBudgetToAssetCurrency(targetBudgetKRW, form.currency)
+  const computedWeightQuantity = Number(form.avgPrice || 0) > 0
+    ? targetBudgetInAssetCurrency / Number(form.avgPrice || 1)
+    : 0
+  const estimatedPurchaseAmount = Number(form.avgPrice || 0) > 0
+    ? computedWeightQuantity * Number(form.avgPrice || 0)
+    : 0
 
   const handlePickAsset = (ticker) => {
     const asset = getAssetInfo(ticker)
@@ -100,7 +142,10 @@ export function HoldingFormModal({
     const draft = { ...form }
     if ((draft.inputMode || 'quantity') === 'weight') {
       const computedQuantity = Number(draft.avgPrice) > 0
-        ? (accountTotalCapital * (Number(draft.targetWeight || 0) / 100)) / Number(draft.avgPrice)
+        ? convertKrwBudgetToAssetCurrency(
+            accountTotalCapital * (Number(draft.targetWeight || 0) / 100),
+            draft.currency
+          ) / Number(draft.avgPrice)
         : 0
       draft.quantity = String(computedQuantity)
     }
@@ -223,6 +268,7 @@ export function HoldingFormModal({
               value={form.avgPrice}
               error={errors.avgPrice}
               prefix={form.currency === 'KRW' ? '₩' : '$'}
+              className="col-span-2"
               onChange={(event) => setForm((current) => ({ ...current, avgPrice: event.target.value }))}
             />
           </div>
@@ -261,15 +307,12 @@ export function HoldingFormModal({
               <div>
                 <dt className="text-[var(--text-muted)]">예상 매수금액</dt>
                 <dd className="mt-1 font-medium text-[var(--text-primary)]">
-                  {Number((form.inputMode === 'weight'
-                    ? (accountTotalCapital * (Number(form.targetWeight || 0) / 100)) / Number(form.avgPrice || 1)
-                    : form.quantity) || 0) && Number(form.avgPrice || 0)
-                    ? `${(
-                        Number(form.inputMode === 'weight'
-                          ? (accountTotalCapital * (Number(form.targetWeight || 0) / 100)) / Number(form.avgPrice || 1)
-                          : form.quantity || 0
-                        ) * Number(form.avgPrice || 0)
-                      ).toLocaleString('ko-KR')}${form.currency === 'KRW' ? '원' : ` ${form.currency}`}`
+                  {Number((form.inputMode === 'weight' ? computedWeightQuantity : form.quantity) || 0) && Number(form.avgPrice || 0)
+                    ? form.inputMode === 'weight'
+                      ? `${formatCurrency(targetBudgetKRW, 'KRW', true)} · 약 ${formatCurrency(estimatedPurchaseAmount, form.currency)}`
+                      : `${(
+                          Number(form.quantity || 0) * Number(form.avgPrice || 0)
+                        ).toLocaleString('ko-KR')}${form.currency === 'KRW' ? '원' : ` ${form.currency}`}`
                     : '수량과 단가를 입력해 주세요'}
                 </dd>
               </div>
@@ -282,8 +325,16 @@ export function HoldingFormModal({
                   <dt className="text-[var(--text-muted)]">계산 수량</dt>
                   <dd className="mt-1 font-medium text-[var(--text-primary)]">
                     {Number(form.avgPrice || 0) > 0
-                      ? (((accountTotalCapital * (Number(form.targetWeight || 0) / 100)) / Number(form.avgPrice || 1)) || 0).toLocaleString('ko-KR', { maximumFractionDigits: 4 })
+                      ? formatNumber(computedWeightQuantity, 4)
                       : '단가 입력 필요'}
+                  </dd>
+                </div>
+              )}
+              {form.inputMode === 'weight' && (
+                <div>
+                  <dt className="text-[var(--text-muted)]">비중 기준 예산</dt>
+                  <dd className="mt-1 font-medium text-[var(--text-primary)]">
+                    {`${formatCurrency(targetBudgetKRW, 'KRW', true)}${form.currency !== 'KRW' ? ` · 약 ${formatCurrency(targetBudgetInAssetCurrency, form.currency)}` : ''}`}
                   </dd>
                 </div>
               )}

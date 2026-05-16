@@ -3,6 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,13 +14,24 @@
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.4",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
+    "cors": "^2.8.5",
     "date-fns": "^3.6.0",
+    "express": "^4.21.1",
+    "express-rate-limit": "^8.3.1",
+    "google-auth-library": "^10.6.2",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.441.0",
+    "morgan": "^1.10.1",
+    "nodemailer": "^8.0.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
     "recharts": "^2.12.7",
+    "uuid": "^13.0.0",
+    "ws": "^8.20.0",
+    "yahoo-finance2": "^3.13.2",
     "zustand": "^4.5.5"
   },
   "devDependencies": {

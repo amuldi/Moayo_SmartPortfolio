@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight, BadgePlus, BriefcaseBusiness,
-  CircleDollarSign, RefreshCw, TrendingDown, TrendingUp, Wallet,
+  CircleDollarSign, RefreshCw, Star, TrendingDown, TrendingUp, Wallet,
 } from 'lucide-react'
 import { Card, CardBody, CardHeader, CardTitle, StatCard } from '../components/ui/Card.jsx'
 import { Button } from '../components/ui/Button.jsx'
@@ -13,7 +13,7 @@ import { buildPortfolioSnapshot } from '../features/portfolio/analytics.js'
 import { formatCurrency, formatPct, formatSignedCurrency } from '../utils/formatters.js'
 import clsx from 'clsx'
 
-function EmptyDashboard() {
+function EmptyDashboard({ onLoadSample }) {
   return (
     <Card className="py-16 text-center">
       <div className="mx-auto flex max-w-xl flex-col items-center gap-3 px-6">
@@ -26,10 +26,11 @@ function EmptyDashboard() {
         </p>
         <div className="mt-3 flex flex-wrap justify-center gap-3">
           <Link to="/portfolio">
-            <Button icon={BadgePlus}>첫 계좌 만들기</Button>
+            <Button icon={BadgePlus}>바로 포트폴리오 진단받기</Button>
           </Link>
+          <Button variant="secondary" onClick={onLoadSample}>예시 포트폴리오 불러오기</Button>
           <Link to="/analysis">
-            <Button variant="secondary">분석 화면 보기</Button>
+            <Button variant="secondary">진단 화면 보기</Button>
           </Link>
         </div>
       </div>
@@ -42,8 +43,11 @@ export default function Home() {
     accounts,
     livePrices,
     watchlist,
+    addToWatchlist,
+    removeFromWatchlist,
     recentTickers,
     savedPortfolios,
+    loadSamplePortfolio,
     refreshPrices,
     refreshStatus,
     refreshError,
@@ -100,7 +104,7 @@ export default function Home() {
           <div>
             <h1 className="text-xl font-bold text-[var(--text-primary)]">홈</h1>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              투자 현황과 오늘 변동을 빠르게 확인합니다.
+              현재 구조를 진단하고 다음 리밸런싱 단계까지 이어서 확인합니다.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -125,9 +129,29 @@ export default function Home() {
         )}
 
         {!snapshot.holdingCount ? (
-          <EmptyDashboard />
+          <EmptyDashboard onLoadSample={loadSamplePortfolio} />
         ) : (
           <>
+            <Card>
+              <CardBody className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">Rebalancing Workspace</p>
+                  <h2 className="mt-2 text-xl font-bold text-[var(--text-primary)]">현재 상태 → 목표 구조 → 조정 가이드 흐름으로 바로 이동하세요</h2>
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                    현재 비중, 계좌 역할, 중복 노출을 점검한 뒤 어떤 자산을 줄이고 늘릴지 한 화면에서 제안합니다.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link to="/analysis">
+                    <Button>바로 포트폴리오 진단받기</Button>
+                  </Link>
+                  <Link to="/portfolio">
+                    <Button variant="secondary">현재 포트폴리오 수정</Button>
+                  </Link>
+                </div>
+              </CardBody>
+            </Card>
+
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               {topSummary.map((item) => (
                 <StatCard
@@ -250,31 +274,91 @@ export default function Home() {
                 <CardHeader>
                   <CardTitle>최근 조회 종목</CardTitle>
                 </CardHeader>
-                <div className="space-y-2 px-5 py-4">
-                  {(recentTickers.length ? recentTickers : snapshot.holdings.slice(0, 5).map((item) => item.ticker)).slice(0, 5).map((ticker) => {
-                    const item = snapshot.holdings.find((holding) => holding.ticker === ticker)
-                    return (
-                      <div key={ticker} className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2">
-                        <p className="text-sm font-semibold text-[var(--text-primary)]">{item?.name || ticker}</p>
-                        <p className="mt-1 text-xs text-[var(--text-muted)]">{ticker}</p>
-                      </div>
-                    )
-                  })}
-                </div>
+                {recentTickers.length === 0 ? (
+                  <div className="px-5 py-8 text-center">
+                    <p className="text-sm text-[var(--text-secondary)]">아직 조회한 종목이 없습니다</p>
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">종목을 추가하면 최근 조회 목록이 쌓입니다.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 px-5 py-4">
+                    {recentTickers.slice(0, 5).map((ticker) => {
+                      const item = snapshot.holdings.find((holding) => holding.ticker === ticker)
+                      const live = livePrices[ticker]
+                      const isWatch = watchlist.some((watch) => watch.ticker === ticker)
+                      return (
+                        <div key={ticker} className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-[var(--text-primary)]">{item?.name || ticker}</p>
+                              <p className="mt-1 text-xs text-[var(--text-muted)]">{ticker}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => (isWatch ? removeFromWatchlist(ticker) : addToWatchlist(ticker, item?.name || ticker))}
+                              className={clsx('shrink-0', isWatch ? 'text-amber-500' : 'text-[var(--text-muted)]')}
+                              aria-label={isWatch ? '관심 종목에서 제거' : '관심 종목에 저장'}
+                            >
+                              <Star size={14} fill={isWatch ? 'currentColor' : 'none'} />
+                            </button>
+                          </div>
+                          <div className="mt-2 flex items-center justify-between text-xs">
+                            <span className="text-[var(--text-secondary)]">
+                              {live?.price != null ? formatCurrency(live.price, live.currency || item?.currency || 'KRW') : '시세 대기 중'}
+                            </span>
+                            <span className={clsx(live?.changePct >= 0 ? 'positive' : 'negative')}>
+                              {live?.changePct != null ? formatPct(live.changePct, 2) : '—'}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </Card>
 
               <Card>
                 <CardHeader>
                   <CardTitle>관심 종목</CardTitle>
                 </CardHeader>
-                <div className="space-y-2 px-5 py-4">
-                  {(watchlist.length ? watchlist : snapshot.holdings.slice(0, 4).map((item) => ({ ticker: item.ticker, name: item.name }))).slice(0, 5).map((item) => (
-                    <div key={item.ticker} className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2">
-                      <p className="text-sm font-semibold text-[var(--text-primary)]">{item.name}</p>
-                      <p className="mt-1 text-xs text-[var(--text-muted)]">{item.ticker}</p>
-                    </div>
-                  ))}
-                </div>
+                {watchlist.length === 0 ? (
+                  <div className="px-5 py-8 text-center">
+                    <p className="text-sm text-[var(--text-secondary)]">관심 종목이 없습니다</p>
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">종목 옆 별표를 눌러 관심 목록에 추가하세요.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 px-5 py-4">
+                    {watchlist.slice(0, 5).map((item) => {
+                      const live = livePrices[item.ticker]
+                      const currency = live?.currency || snapshot.holdings.find((holding) => holding.ticker === item.ticker)?.currency || 'KRW'
+                      return (
+                        <div key={item.ticker} className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-[var(--text-primary)]">{item.name}</p>
+                              <p className="mt-1 text-xs text-[var(--text-muted)]">{item.ticker}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeFromWatchlist(item.ticker)}
+                              className="shrink-0 text-amber-500"
+                              aria-label="관심 종목에서 제거"
+                            >
+                              <Star size={14} fill="currentColor" />
+                            </button>
+                          </div>
+                          <div className="mt-2 flex items-center justify-between text-xs">
+                            <span className="text-[var(--text-secondary)]">
+                              {live?.price != null ? formatCurrency(live.price, currency) : '시세 대기 중'}
+                            </span>
+                            <span className={clsx(live?.changePct >= 0 ? 'positive' : 'negative')}>
+                              {live?.changePct != null ? formatPct(live.changePct, 2) : '—'}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </Card>
 
               <Card>

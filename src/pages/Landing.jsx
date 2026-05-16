@@ -69,33 +69,33 @@ function HeroCard({ ticker, name, price, change, up, color, delay = '0s' }) {
 const FEATURES = [
   {
     icon: PieChart,
-    title: '계좌별 통합 관리',
-    desc: 'ISA, 연금저축, IRP, 종합위탁, CMA — 모든 계좌를 하나의 대시보드에서.',
+    title: '현재 구조 빠른 진단',
+    desc: '보유 종목과 계좌 종류를 입력하면 집중도, 섹터 쏠림, 계좌 역할 충돌을 바로 정리합니다.',
   },
   {
     icon: ShieldCheck,
-    title: '한국 세금 최적화',
-    desc: '계좌 유형별 세금 구조를 분석해 연간 절세 전략을 자동으로 수립합니다.',
+    title: '계좌별 역할 가이드',
+    desc: 'ISA, 연금저축, 종합계좌를 성장·절세·장기 적립 관점으로 나눠 조정 우선순위를 제안합니다.',
   },
   {
     icon: Sparkles,
-    title: 'AI 포트폴리오 진단',
-    desc: '집중도 리스크, 지역 편중, 자산군 불균형을 AI가 즉시 감지하고 개선안을 제시합니다.',
+    title: '추천 포트폴리오 비교',
+    desc: '성장형, 균형형, 배당형 등 목표에 맞는 대안을 카드형으로 비교하고 바로 선택할 수 있습니다.',
   },
   {
     icon: TrendingUp,
-    title: '백테스팅 엔진',
-    desc: '최대 6년 시뮬레이션으로 내 포트폴리오의 과거 성과와 변동성을 검증하세요.',
+    title: '포트폴리오 조정안',
+    desc: '지금 무엇을 줄이고 무엇을 늘려야 하는지, 한 번에 바꿀지 나눠 바꿀지까지 자연어로 보여줍니다.',
   },
   {
     icon: Zap,
-    title: '실시간 시세',
-    desc: '국내외 전 종목을 Yahoo Finance 기반으로 실시간으로 불러옵니다. API 키 불필요.',
+    title: '공유 가능한 결과 화면',
+    desc: '진단 결과와 조정 가이드를 저장하고 다시 보거나 요약 문구로 공유할 수 있습니다.',
   },
   {
     icon: BarChart3,
-    title: '벤치마크 비교',
-    desc: 'S&P 500, 글로벌 시장, 올웨더 전략과 내 포트폴리오를 한 화면에서 비교합니다.',
+    title: '예시 포트폴리오 체험',
+    desc: '로그인 없이도 예시 데이터를 불러와 결과 화면까지 바로 체험할 수 있습니다.',
   },
 ]
 
@@ -103,26 +103,7 @@ const STATS = [
   { value: '5+',   label: '지원 계좌 유형' },
   { value: '100+', label: '국내외 종목' },
   { value: '6년',  label: '백테스팅 기간' },
-  { value: '무료', label: '가격' },
-]
-
-const PLANS = [
-  {
-    name: 'Free',
-    price: '무료',
-    desc: '개인 투자자를 위한 핵심 기능',
-    features: ['포트폴리오 1개', '실시간 시세', 'AI 기본 진단', '세금 분석'],
-    cta: '무료로 시작',
-    highlight: false,
-  },
-  {
-    name: 'Pro',
-    price: '월 9,900원',
-    desc: '진지한 투자자를 위한 전문 기능',
-    features: ['포트폴리오 무제한', '가격 알림', '백테스팅 고급', 'CSV 내보내기', 'AI 심층 분석'],
-    cta: '14일 무료 체험',
-    highlight: true,
-  },
+  { value: '즉시', label: '조정안 생성' },
 ]
 
 export default function Landing() {
@@ -182,22 +163,22 @@ export default function Landing() {
               style={{ background: 'rgba(91,163,207,0.12)', color: '#5BA3CF' }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#5BA3CF] animate-pulse" />
-              실시간 포트폴리오 플랫폼
+              리밸런싱 워크스페이스
             </div>
             <h1 className="text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight mb-5">
-              내 투자를<br />
+              내 포트폴리오<br />
               <span style={{
                 background: 'linear-gradient(135deg, #5BA3CF, #7BBFE0)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
               }}>
-                제대로 파악하세요
+                진단 받으러 가기
               </span>
             </h1>
             <p className="text-lg text-slate-500 leading-relaxed mb-8 max-w-md">
-              ISA부터 연금저축까지, 흩어진 계좌를 한 곳에서 관리하고
-              세금 최적화와 AI 분석으로 수익률을 높이세요.
+              현재 포트폴리오 구조를 진단하고, 더 나은 목표 포트폴리오와
+              계좌별 매수·매도 순서를 한 번에 정리하세요.
             </p>
             <div className="flex items-center gap-3">
               <Link
@@ -205,7 +186,7 @@ export default function Landing() {
                 className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 hover:scale-105"
                 style={{ background: '#5BA3CF', boxShadow: '0 4px 16px rgba(91,163,207,0.40)' }}
               >
-                무료로 시작하기
+                바로 포트폴리오 진단받기
                 <ArrowRight size={15} />
               </Link>
               <Link
@@ -216,9 +197,9 @@ export default function Landing() {
               </Link>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-400">
-              <span>신용카드 불필요 · 즉시 시작</span>
+              <span>로그인 없이 체험 · 예시 포트폴리오 제공</span>
               <Link to="/home" onClick={handleGuestMode} className="font-medium text-[#5BA3CF] hover:underline">
-                로그인 없이 체험하기
+                로그인 없이 진단받기
               </Link>
             </div>
           </div>
@@ -254,9 +235,9 @@ export default function Landing() {
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="text-center mb-14">
           <h2 className="text-3xl font-bold text-slate-900 tracking-tight mb-3">
-            투자의 모든 것, 하나로
+            실행까지 이어지는 포트폴리오 앱
           </h2>
-          <p className="text-slate-500">개인 투자자에게 필요한 도구를 한 플랫폼에 담았습니다.</p>
+          <p className="text-slate-500">분석에서 끝나지 않고 다음 액션까지 바로 정리합니다.</p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -279,56 +260,25 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── 요금제 ─────────────────────────────────────── */}
+      {/* ── 사용 흐름 ───────────────────────────────────── */}
       <section style={{ background: '#FFFFFF', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
         <div className="max-w-4xl mx-auto px-6 py-20">
           <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold text-slate-900 tracking-tight mb-3">간단한 가격 정책</h2>
-            <p className="text-slate-500">복잡한 요금제 없이, 필요한 기능만 선택하세요.</p>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight mb-3">어떻게 쓰는지 한눈에</h2>
+          <p className="text-slate-500">현재 구조를 입력하면 목표 포트폴리오와 조정 가이드를 바로 받는 흐름입니다.</p>
           </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className="p-7 rounded-2xl border"
-                style={{
-                  background: plan.highlight ? '#5BA3CF' : '#FFFFFF',
-                  borderColor: plan.highlight ? '#5BA3CF' : '#E2E8F0',
-                  boxShadow: plan.highlight ? '0 8px 32px rgba(91,163,207,0.35)' : 'none',
-                }}
-              >
-                <p className="text-xs font-bold uppercase tracking-widest mb-1"
-                  style={{ color: plan.highlight ? 'rgba(255,255,255,0.7)' : '#94A3B8' }}>
-                  {plan.name}
-                </p>
-                <p className="text-2xl font-extrabold mb-1"
-                  style={{ color: plan.highlight ? '#FFFFFF' : '#0F172A' }}>
-                  {plan.price}
-                </p>
-                <p className="text-xs mb-6"
-                  style={{ color: plan.highlight ? 'rgba(255,255,255,0.75)' : '#64748B' }}>
-                  {plan.desc}
-                </p>
-                <ul className="space-y-2.5 mb-8">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm"
-                      style={{ color: plan.highlight ? 'rgba(255,255,255,0.9)' : '#475569' }}>
-                      <CheckCircle2 size={14} style={{ color: plan.highlight ? 'rgba(255,255,255,0.8)' : '#10B981', flexShrink: 0 }} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/register"
-                  className="block text-center py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
-                  style={{
-                    background: plan.highlight ? 'rgba(255,255,255,0.20)' : '#5BA3CF',
-                    color: '#FFFFFF',
-                    border: plan.highlight ? '1px solid rgba(255,255,255,0.30)' : 'none',
-                  }}
-                >
-                  {plan.cta}
-                </Link>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              ['1. 현재 계좌 입력', '보유 종목, 수량, 계좌 종류만 입력하면 현재 구조를 진단합니다.'],
+              ['2. 목표 포트폴리오 선택', '성장형·균형형·배당형 추천안을 비교하고 내게 맞는 구조를 고릅니다.'],
+              ['3. 조정 가이드 확인', '무엇을 먼저 줄이고 늘릴지, 어떤 계좌에서 시작할지 바로 제안합니다.'],
+            ].map(([title, desc]) => (
+              <div key={title} className="p-7 rounded-2xl border bg-white" style={{ borderColor: '#E2E8F0' }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(91,163,207,0.12)' }}>
+                  <CheckCircle2 size={18} style={{ color: '#5BA3CF' }} />
+                </div>
+                <p className="text-sm font-bold text-slate-800">{title}</p>
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">{desc}</p>
               </div>
             ))}
           </div>
@@ -341,14 +291,14 @@ export default function Landing() {
           지금 바로 시작하세요
         </h2>
         <p className="text-slate-500 mb-8">
-          가입 후 30초 안에 포트폴리오를 만들 수 있습니다.
+          첫 포트폴리오를 만들고 조정 가이드까지 확인하는 데 오래 걸리지 않습니다.
         </p>
         <Link
           to="/register"
           className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 hover:scale-105"
           style={{ background: '#5BA3CF', boxShadow: '0 4px 20px rgba(91,163,207,0.40)' }}
         >
-          무료로 시작하기
+          바로 포트폴리오 진단받기
           <ArrowRight size={15} />
         </Link>
       </section>

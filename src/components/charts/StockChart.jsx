@@ -94,9 +94,10 @@ export function StockChart({ ticker, height = 280, initialQuote = null }) {
     return () => clearInterval(id)
   }, [loadQuote, initialQuote])
 
-  // WebSocket 실시간 시세 (1일 뷰일 때만 연결)
+  // WebSocket 실시간 시세 (로컬/전용 서버에서만 사용)
   useEffect(() => {
-    if (range !== '1d') {
+    const realtimeEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_REALTIME_WS === 'true'
+    if (range !== '1d' || !realtimeEnabled) {
       if (wsRef.current) {
         wsRef.current.close()
         wsRef.current = null
@@ -108,7 +109,8 @@ export function StockChart({ ticker, height = 280, initialQuote = null }) {
     let mounted = true
     let ws
     try {
-      ws = new WebSocket(`ws://${window.location.host}/ws`)
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      ws = new WebSocket(`${protocol}//${window.location.host}/ws`)
       wsRef.current = ws
 
       ws.onopen = () => {
