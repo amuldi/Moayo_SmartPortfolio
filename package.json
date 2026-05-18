@@ -1,0 +1,60 @@
+{
+  "name": "portfolio-platform",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "db:migrate": "node server/db/migrate.js",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "server": "node server/server.js",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "budget": "npm run build && node scripts/performance-budget.mjs"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "@react-oauth/google": "^0.13.4",
+    "@sentry/node": "^10.53.1",
+    "@sentry/react": "^10.53.1",
+    "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
+    "cookie": "^1.1.1",
+    "cors": "^2.8.5",
+    "date-fns": "^3.6.0",
+    "express": "^4.21.1",
+    "express-rate-limit": "^8.3.1",
+    "google-auth-library": "^10.6.2",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^0.441.0",
+    "morgan": "^1.10.1",
+    "nodemailer": "^8.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2",
+    "recharts": "^2.12.7",
+    "uuid": "^13.0.0",
+    "ws": "^8.20.0",
+    "yahoo-finance2": "^3.13.2",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.60.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^10.4.0",
+    "globals": "^17.6.0",
+    "jsdom": "^29.1.1",
+    "node-mocks-http": "^1.17.2",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.12",
+    "vite": "^5.4.8",
+    "vitest": "^4.1.6"
+  }
+}

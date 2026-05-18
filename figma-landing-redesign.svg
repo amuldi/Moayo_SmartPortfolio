@@ -1,0 +1,161 @@
+<svg width="1440" height="1800" viewBox="0 0 1440 1800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="28" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+    <linearGradient id="heroWash" x1="720" y1="60" x2="720" y2="780" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F7FBFF"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <linearGradient id="chartArea" x1="339" y1="730" x2="830" y2="960" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2F80ED" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#2F80ED" stop-opacity="0"/>
+    </linearGradient>
+    <style>
+      .font { font-family: Inter, Pretendard, "Noto Sans KR", Arial, sans-serif; }
+      .h1 { font-size: 76px; font-weight: 760; letter-spacing: 0; fill: #111827; }
+      .h2 { font-size: 42px; font-weight: 760; letter-spacing: 0; fill: #111827; }
+      .h3 { font-size: 24px; font-weight: 720; letter-spacing: 0; fill: #111827; }
+      .body { font-size: 19px; font-weight: 430; letter-spacing: 0; fill: #4B5563; }
+      .body-sm { font-size: 15px; font-weight: 430; letter-spacing: 0; fill: #6B7280; }
+      .label { font-size: 14px; font-weight: 650; letter-spacing: 0; fill: #6B7280; }
+      .number { font-size: 30px; font-weight: 760; letter-spacing: 0; fill: #111827; }
+      .tiny { font-size: 12px; font-weight: 650; letter-spacing: 0; fill: #94A3B8; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="1800" fill="#FFFFFF"/>
+  <rect x="0" y="0" width="1440" height="790" fill="url(#heroWash)"/>
+
+  <rect x="64" y="24" width="1312" height="72" rx="8" fill="#FFFFFF" fill-opacity="0.92"/>
+  <rect x="64.5" y="24.5" width="1311" height="71" rx="7.5" stroke="#E5E7EB"/>
+  <circle cx="96" cy="60" r="17" fill="#1F7A8C"/>
+  <path d="M88 62.4C88 55.2 93.1 50 100.5 50H104V67.2H100.4C95.6 67.2 92.4 64.4 92.4 60.4C92.4 56.6 95 54.3 98.3 54.3H99.7V58.1H98.5C97 58.1 95.9 59 95.9 60.4C95.9 62.1 97.3 63.2 100 63.2V54H100.6C95.9 54 92 57.4 92 62.4H88Z" fill="#FFFFFF"/>
+  <text x="124" y="67" class="font" font-size="22" font-weight="760" fill="#111827">Moayo</text>
+  <text x="402" y="66" class="font label">서비스</text>
+  <text x="484" y="66" class="font label">기능</text>
+  <text x="552" y="66" class="font label">보안</text>
+  <text x="620" y="66" class="font label">가격</text>
+  <rect x="1150" y="39" width="80" height="42" rx="6" fill="#FFFFFF"/>
+  <rect x="1150.5" y="39.5" width="79" height="41" rx="5.5" stroke="#D1D5DB"/>
+  <text x="1178" y="66" class="font" font-size="15" font-weight="680" fill="#111827">로그인</text>
+  <rect x="1242" y="39" width="96" height="42" rx="6" fill="#111827"/>
+  <text x="1266" y="66" class="font" font-size="15" font-weight="720" fill="#FFFFFF">시작하기</text>
+
+  <rect x="606" y="146" width="228" height="34" rx="17" fill="#EAF4FF"/>
+  <circle cx="627" cy="163" r="5" fill="#2F80ED"/>
+  <text x="642" y="168" class="font" font-size="14" font-weight="720" fill="#1D4ED8">한국 투자자를 위한 통합 포트폴리오</text>
+  <text x="456" y="260" text-anchor="middle" class="font h1">
+    <tspan x="720" dy="0">Moayo</tspan>
+  </text>
+  <text x="720" y="332" text-anchor="middle" class="font" font-size="34" font-weight="720" fill="#111827">흩어진 투자 계좌를 하나의 전략으로</text>
+  <text x="720" y="385" text-anchor="middle" class="font body">ISA, 연금저축, IRP, 종합위탁, CMA까지 한 화면에서 자산 배분과 수익률을 관리하세요.</text>
+  <text x="720" y="416" text-anchor="middle" class="font body">세금과 리밸런싱 기준을 반영한 한국형 포트폴리오 대시보드입니다.</text>
+
+  <rect x="576" y="458" width="144" height="52" rx="7" fill="#111827"/>
+  <text x="606" y="490" class="font" font-size="16" font-weight="730" fill="#FFFFFF">무료로 시작</text>
+  <path d="M688 484L696 476M696 476L704 484M696 476V493" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="732" y="458" width="132" height="52" rx="7" fill="#FFFFFF"/>
+  <rect x="732.5" y="458.5" width="131" height="51" rx="6.5" stroke="#D1D5DB"/>
+  <text x="759" y="490" class="font" font-size="16" font-weight="730" fill="#111827">데모 보기</text>
+
+  <g filter="url(#softShadow)">
+    <rect x="160" y="584" width="1120" height="610" rx="28" fill="#FFFFFF"/>
+    <rect x="160.5" y="584.5" width="1119" height="609" rx="27.5" stroke="#E5E7EB"/>
+  </g>
+  <rect x="184" y="608" width="1072" height="562" rx="20" fill="#F8FAFC"/>
+  <rect x="208" y="632" width="220" height="514" rx="18" fill="#FFFFFF"/>
+  <circle cx="246" cy="676" r="18" fill="#1F7A8C"/>
+  <text x="276" y="682" class="font" font-size="20" font-weight="760" fill="#111827">Moayo</text>
+  <rect x="232" y="730" width="156" height="38" rx="8" fill="#EEF6FF"/>
+  <text x="260" y="754" class="font" font-size="14" font-weight="730" fill="#1D4ED8">내 포트폴리오</text>
+  <text x="232" y="812" class="font body-sm">분석</text>
+  <text x="232" y="858" class="font body-sm">계좌</text>
+  <text x="232" y="904" class="font body-sm">리밸런싱</text>
+  <text x="232" y="950" class="font body-sm">설정</text>
+  <rect x="232" y="1046" width="136" height="44" rx="8" fill="#111827"/>
+  <text x="257" y="1073" class="font" font-size="14" font-weight="720" fill="#FFFFFF">종목 추가</text>
+
+  <text x="468" y="674" class="font" font-size="28" font-weight="760" fill="#111827">포트폴리오 현황</text>
+  <text x="468" y="704" class="font body-sm">2026년 5월 18일 기준 · 원화 환산</text>
+  <rect x="1056" y="640" width="154" height="42" rx="7" fill="#FFFFFF"/>
+  <rect x="1056.5" y="640.5" width="153" height="41" rx="6.5" stroke="#D1D5DB"/>
+  <text x="1084" y="666" class="font" font-size="14" font-weight="720" fill="#111827">월간 리포트</text>
+
+  <rect x="468" y="734" width="214" height="112" rx="12" fill="#FFFFFF" filter="url(#cardShadow)"/>
+  <text x="492" y="772" class="font label">총 자산</text>
+  <text x="492" y="812" class="font number">128,420,000원</text>
+  <text x="492" y="834" class="font" font-size="13" font-weight="720" fill="#E5484D">+12.4% 올해</text>
+  <rect x="704" y="734" width="214" height="112" rx="12" fill="#FFFFFF" filter="url(#cardShadow)"/>
+  <text x="728" y="772" class="font label">평가 손익</text>
+  <text x="728" y="812" class="font number">+8,340,000원</text>
+  <text x="728" y="834" class="font" font-size="13" font-weight="720" fill="#E5484D">세후 예상 +6.8%</text>
+  <rect x="940" y="734" width="270" height="112" rx="12" fill="#FFFFFF" filter="url(#cardShadow)"/>
+  <text x="964" y="772" class="font label">리밸런싱 알림</text>
+  <text x="964" y="812" class="font number">3개</text>
+  <text x="964" y="834" class="font" font-size="13" font-weight="720" fill="#1D4ED8">미국 ETF 비중 점검 필요</text>
+
+  <rect x="468" y="876" width="520" height="236" rx="16" fill="#FFFFFF"/>
+  <rect x="468.5" y="876.5" width="519" height="235" rx="15.5" stroke="#E5E7EB"/>
+  <text x="496" y="916" class="font h3">수익률 추이</text>
+  <text x="880" y="916" class="font" font-size="14" font-weight="720" fill="#E5484D">+18.2%</text>
+  <path d="M506 1058L564 1030L621 1042L679 996L736 1014L794 956L852 930L930 894V1078H506V1058Z" fill="url(#chartArea)"/>
+  <path d="M506 1058L564 1030L621 1042L679 996L736 1014L794 956L852 930L930 894" stroke="#2F80ED" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="930" cy="894" r="6" fill="#2F80ED" stroke="#FFFFFF" stroke-width="4"/>
+  <line x1="506" y1="1078" x2="946" y2="1078" stroke="#E5E7EB"/>
+  <line x1="506" y1="1018" x2="946" y2="1018" stroke="#EEF2F7"/>
+  <line x1="506" y1="958" x2="946" y2="958" stroke="#EEF2F7"/>
+
+  <rect x="1012" y="876" width="198" height="236" rx="16" fill="#FFFFFF"/>
+  <rect x="1012.5" y="876.5" width="197" height="235" rx="15.5" stroke="#E5E7EB"/>
+  <text x="1040" y="916" class="font h3">자산 배분</text>
+  <circle cx="1112" cy="1000" r="58" fill="#EAF4FF"/>
+  <path d="M1112 942A58 58 0 0 1 1164 974L1112 1000Z" fill="#2F80ED"/>
+  <path d="M1164 974A58 58 0 0 1 1132 1054L1112 1000Z" fill="#1F7A8C"/>
+  <path d="M1132 1054A58 58 0 1 1 1112 942L1112 1000Z" fill="#DDEB57"/>
+  <circle cx="1112" cy="1000" r="34" fill="#FFFFFF"/>
+  <text x="1070" y="1092" class="font tiny">국내 38%</text>
+  <text x="1140" y="1092" class="font tiny">해외 44%</text>
+
+  <rect x="496" y="1136" width="686" height="1" fill="#E5E7EB"/>
+  <text x="496" y="1162" class="font tiny">삼성전자</text>
+  <text x="660" y="1162" class="font tiny">₩18,420,000</text>
+  <text x="840" y="1162" class="font tiny" fill="#E5484D">+4.2%</text>
+  <text x="996" y="1162" class="font tiny">KODEX 200</text>
+  <text x="1120" y="1162" class="font tiny" fill="#2F80ED">23%</text>
+
+  <rect x="100" y="1274" width="1240" height="1" fill="#EEF2F7"/>
+  <text x="100" y="1360" class="font h2">투자 관리에 필요한 핵심 기능만 정돈했습니다</text>
+  <text x="100" y="1400" class="font body">초보 투자자도 바로 이해할 수 있고, 반복적으로 확인하는 투자자도 빠르게 스캔할 수 있는 구조입니다.</text>
+
+  <rect x="100" y="1460" width="380" height="206" rx="12" fill="#F8FAFC"/>
+  <rect x="100.5" y="1460.5" width="379" height="205" rx="11.5" stroke="#E5E7EB"/>
+  <rect x="132" y="1492" width="48" height="48" rx="12" fill="#EAF4FF"/>
+  <path d="M146 1519L156 1509L166 1519L174 1511" stroke="#2F80ED" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="132" y="1584" class="font h3">통합 계좌 관리</text>
+  <text x="132" y="1620" class="font body-sm">ISA, 연금저축, IRP, 종합위탁 계좌를</text>
+  <text x="132" y="1644" class="font body-sm">한 화면에서 비교합니다.</text>
+
+  <rect x="530" y="1460" width="380" height="206" rx="12" fill="#F8FAFC"/>
+  <rect x="530.5" y="1460.5" width="379" height="205" rx="11.5" stroke="#E5E7EB"/>
+  <rect x="562" y="1492" width="48" height="48" rx="12" fill="#EEFBEF"/>
+  <path d="M577 1518H596M577 1508H604M577 1528H590" stroke="#1F7A8C" stroke-width="3" stroke-linecap="round"/>
+  <text x="562" y="1584" class="font h3">세금 고려 분석</text>
+  <text x="562" y="1620" class="font body-sm">계좌 유형과 매매 기록을 바탕으로</text>
+  <text x="562" y="1644" class="font body-sm">실질 수익률을 확인합니다.</text>
+
+  <rect x="960" y="1460" width="380" height="206" rx="12" fill="#F8FAFC"/>
+  <rect x="960.5" y="1460.5" width="379" height="205" rx="11.5" stroke="#E5E7EB"/>
+  <rect x="992" y="1492" width="48" height="48" rx="12" fill="#FFF6E5"/>
+  <path d="M1006 1516H1026M1016 1506V1526" stroke="#D97706" stroke-width="3" stroke-linecap="round"/>
+  <text x="992" y="1584" class="font h3">리밸런싱 제안</text>
+  <text x="992" y="1620" class="font body-sm">목표 비중에서 벗어난 자산을 찾아</text>
+  <text x="992" y="1644" class="font body-sm">다음 액션을 제안합니다.</text>
+
+  <rect x="100" y="1718" width="1240" height="1" fill="#EEF2F7"/>
+  <text x="100" y="1762" class="font" font-size="16" font-weight="720" fill="#111827">Moayo</text>
+  <text x="1175" y="1762" class="font body-sm">전문적인 한국형 포트폴리오 관리</text>
+</svg>

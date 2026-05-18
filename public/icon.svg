@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Ultra-minimalist tapered upward curve — sky blue on white -->
+  <rect width="512" height="512" fill="#FFFFFF"/>
+  <path
+    d="M 92,421 C 113,277 288,93 390,62 A 82,82 0 0,1 450,215 C 318,256 134,358 113,430 Z"
+    fill="#5BA3CF"/>
+</svg>

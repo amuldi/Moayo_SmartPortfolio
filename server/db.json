@@ -1,0 +1,304 @@
+{
+  "users": [
+    {
+      "id": "u-1774054195612",
+      "username": "전시훈",
+      "email": "undae2109@gmail.com",
+      "googleId": "117750843800871683625",
+      "emailVerified": true,
+      "createdAt": "2026-03-21T00:49:55.612Z"
+    }
+  ],
+  "portfolios": {
+    "u-1774012530462": {
+      "accounts": [],
+      "updatedAt": "2026-03-20T15:49:27.860Z"
+    },
+    "u-1774054195612": {
+      "currentPortfolioId": "default",
+      "currentPortfolioName": "기본 포트폴리오",
+      "accounts": [
+        {
+          "id": "acc-1774054233303",
+          "name": "ISA",
+          "type": "ISA",
+          "baseCurrency": "KRW",
+          "totalCapital": 2000000,
+          "memo": "",
+          "holdings": [],
+          "createdAt": 1778918965171,
+          "updatedAt": 1778929872590
+        },
+        {
+          "id": "acc-1774054253403",
+          "name": "종합",
+          "type": "BROKERAGE",
+          "baseCurrency": "KRW",
+          "totalCapital": 1500000,
+          "memo": "",
+          "holdings": [],
+          "createdAt": 1778918965171,
+          "updatedAt": 1778929872590
+        },
+        {
+          "id": "acc-1774054264820",
+          "name": "연금저축",
+          "type": "PENSION",
+          "baseCurrency": "KRW",
+          "totalCapital": 500000,
+          "memo": "",
+          "holdings": [],
+          "createdAt": 1778918965171,
+          "updatedAt": 1778929872590
+        },
+        {
+          "id": "acc-1774075407717",
+          "name": "금",
+          "type": "GOLD",
+          "baseCurrency": "KRW",
+          "totalCapital": 1000000,
+          "memo": "",
+          "holdings": [],
+          "createdAt": 1778918965171,
+          "updatedAt": 1778929872590
+        },
+        {
+          "id": "account-1778929871877-d5xo8r",
+          "name": "OCR 계좌 1",
+          "type": "BROKERAGE",
+          "baseCurrency": "KRW",
+          "totalCapital": 4114101,
+          "memo": "스크린샷 2026-05-16 오후 8.09.06.png에서 무료 OCR로 가져온 데이터입니다.",
+          "holdings": [
+            {
+              "id": "holding-1778929871877-nncvkt",
+              "ticker": "USD",
+              "name": "미국달러",
+              "sector": "기타",
+              "region": "기타",
+              "market": "글로벌",
+              "assetClass": "equity",
+              "currency": "KRW",
+              "category": "현금성",
+              "quantity": 8.21,
+              "avgPrice": 1492,
+              "targetWeight": 0,
+              "memo": "무료 OCR로 계좌상세 화면에서 가져온 데이터입니다.",
+              "createdAt": 1778929871877,
+              "updatedAt": 1778929872590
+            },
+            {
+              "id": "holding-1778929871877-a0basc",
+              "ticker": "QQQM",
+              "name": "INVESCO NASDAQ 100",
+              "sector": "미국주식",
+              "region": "미국",
+              "market": "미국",
+              "assetClass": "equity",
+              "currency": "KRW",
+              "category": "ETF",
+              "quantity": 4,
+              "avgPrice": 358255.75,
+              "targetWeight": 0,
+              "memo": "무료 OCR로 계좌상세 화면에서 가져온 데이터입니다.",
+              "createdAt": 1778929871877,
+              "updatedAt": 1778929872590
+            },
+            {
+              "id": "holding-1778929871877-uyf04m",
+              "ticker": "USD",
+              "name": "미국달러 8.210000 1491.80 - 12,248.00 12,248.00 - - INVESCO NASDAQ 100",
+              "sector": "기타",
+              "region": "기타",
+              "market": "글로벌",
+              "assetClass": "equity",
+              "currency": "KRW",
+              "category": "현금성",
+              "quantity": 4,
+              "avgPrice": 358256,
+              "targetWeight": 0,
+              "memo": "무료 OCR로 계좌상세 화면에서 가져온 데이터입니다.",
+              "createdAt": 1778929871877,
+              "updatedAt": 1778929872590
+            },
+            {
+              "id": "holding-1778929871877-tg93rd",
+              "ticker": "VANGUARDFTSE",
+              "name": "VANGUARD FTSE",
+              "sector": "기타",
+              "region": "기타",
+              "market": "글로벌",
+              "assetClass": "equity",
+              "currency": "KRW",
+              "category": "ETF",
+              "quantity": 6,
+              "avgPrice": 98461,
+              "targetWeight": 0,
+              "memo": "무료 OCR로 계좌상세 화면에서 가져온 데이터입니다.",
+              "createdAt": 1778929871877,
+              "updatedAt": 1778929872590
+            }
+          ],
+          "createdAt": 1778929871877,
+          "updatedAt": 1778929872590
+        }
+      ],
+      "savedPortfolios": [
+        {
+          "id": "default",
+          "name": "기본 포트폴리오",
+          "accounts": [
+            {
+              "id": "acc-1774054233303",
+              "name": "ISA",
+              "type": "ISA",
+              "baseCurrency": "KRW",
+              "totalCapital": 2000000,
+              "memo": "",
+              "holdings": [],
+              "createdAt": 1778918965171,
+              "updatedAt": 1778929872590
+            },
+            {
+              "id": "acc-1774054253403",
+              "name": "종합",
+              "type": "BROKERAGE",
+              "baseCurrency": "KRW",
+              "totalCapital": 1500000,
+              "memo": "",
+              "holdings": [],
+              "createdAt": 1778918965171,
+              "updatedAt": 1778929872590
+            },
+            {
+              "id": "acc-1774054264820",
+              "name": "연금저축",
+              "type": "PENSION",
+              "baseCurrency": "KRW",
+              "totalCapital": 500000,
+              "memo": "",
+              "holdings": [],
+              "createdAt": 1778918965171,
+              "updatedAt": 1778929872590
+            },
+            {
+              "id": "acc-1774075407717",
+              "name": "금",
+              "type": "GOLD",
+              "baseCurrency": "KRW",
+              "totalCapital": 1000000,
+              "memo": "",
+              "holdings": [],
+              "createdAt": 1778918965171,
+              "updatedAt": 1778929872590
+            },
+            {
+              "id": "account-1778929871877-d5xo8r",
+              "name": "OCR 계좌 1",
+              "type": "BROKERAGE",
+              "baseCurrency": "KRW",
+              "totalCapital": 4114101,
+              "memo": "스크린샷 2026-05-16 오후 8.09.06.png에서 무료 OCR로 가져온 데이터입니다.",
+              "holdings": [
+                {
+                  "id": "holding-1778929871877-nncvkt",
+                  "ticker": "USD",
+                  "name": "미국달러",
+                  "sector": "기타",
+                  "region": "기타",
+                  "market": "글로벌",
+                  "assetClass": "equity",
+                  "currency": "KRW",
+                  "category": "현금성",
+                  "quantity": 8.21,
+                  "avgPrice": 1492,
+                  "targetWeight": 0,
+                  "memo": "무료 OCR로 계좌상세 화면에서 가져온 데이터입니다.",
+                  "createdAt": 1778929871877,
+                  "updatedAt": 1778929872590
+                },
+                {
+                  "id": "holding-1778929871877-a0basc",
+                  "ticker": "QQQM",
+                  "name": "INVESCO NASDAQ 100",
+                  "sector": "미국주식",
+                  "region": "미국",
+                  "market": "미국",
+                  "assetClass": "equity",
+                  "currency": "KRW",
+                  "category": "ETF",
+                  "quantity": 4,
+                  "avgPrice": 358255.75,
+                  "targetWeight": 0,
+                  "memo": "무료 OCR로 계좌상세 화면에서 가져온 데이터입니다.",
+                  "createdAt": 1778929871877,
+                  "updatedAt": 1778929872590
+                },
+                {
+                  "id": "holding-1778929871877-uyf04m",
+                  "ticker": "USD",
+                  "name": "미국달러 8.210000 1491.80 - 12,248.00 12,248.00 - - INVESCO NASDAQ 100",
+                  "sector": "기타",
+                  "region": "기타",
+                  "market": "글로벌",
+                  "assetClass": "equity",
+                  "currency": "KRW",
+                  "category": "현금성",
+                  "quantity": 4,
+                  "avgPrice": 358256,
+                  "targetWeight": 0,
+                  "memo": "무료 OCR로 계좌상세 화면에서 가져온 데이터입니다.",
+                  "createdAt": 1778929871877,
+                  "updatedAt": 1778929872590
+                },
+                {
+                  "id": "holding-1778929871877-tg93rd",
+                  "ticker": "VANGUARDFTSE",
+                  "name": "VANGUARD FTSE",
+                  "sector": "기타",
+                  "region": "기타",
+                  "market": "글로벌",
+                  "assetClass": "equity",
+                  "currency": "KRW",
+                  "category": "ETF",
+                  "quantity": 6,
+                  "avgPrice": 98461,
+                  "targetWeight": 0,
+                  "memo": "무료 OCR로 계좌상세 화면에서 가져온 데이터입니다.",
+                  "createdAt": 1778929871877,
+                  "updatedAt": 1778929872590
+                }
+              ],
+              "createdAt": 1778929871877,
+              "updatedAt": 1778929872590
+            }
+          ],
+          "watchlist": [],
+          "recentTickers": [],
+          "preferences": {
+            "market": "ALL",
+            "category": "ALL",
+            "performance": "ALL",
+            "sortBy": "valueDesc",
+            "period": "1Y",
+            "search": "",
+            "accountId": "ALL"
+          },
+          "updatedAt": 1778929872580
+        }
+      ],
+      "watchlist": [],
+      "recentTickers": [],
+      "preferences": {
+        "market": "ALL",
+        "category": "ALL",
+        "performance": "ALL",
+        "sortBy": "valueDesc",
+        "period": "1Y",
+        "search": "",
+        "accountId": "ALL"
+      },
+      "updatedAt": "2026-05-16T11:11:12.591Z"
+    }
+  }
+}
