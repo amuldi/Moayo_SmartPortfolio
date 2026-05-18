@@ -27,6 +27,7 @@
 - [x] Health endpoints include `/api/health`, `/api/health/live`, and `/api/health/ready`.
 - [x] Implement a Postgres repository adapter using `DATABASE_URL`.
 - [x] Add migrations and transaction-based portfolio replace/upsert.
+- [x] Production API refuses JSON flat-file storage and requires external Postgres.
 
 ## Security
 
@@ -40,12 +41,15 @@
 - [x] Naver OAuth uses authorization-code popup flow with redirect origin validation and server-side token exchange.
 - [x] Use an optional Upstash Redis distributed rate limit store for Vercel/multi-instance production.
 - [x] Add optional Sentry error tracking for server and client runtime errors.
+- [x] Add `npm run env:check` to catch missing production DB, SMTP, JWT, and OAuth variables.
 
 ## Deployment
 
 - [x] `npm run build` passes.
 - [x] Vercel no longer bundles `server/db.json`.
+- [x] WebSocket realtime is separated into `npm run realtime` for long-lived hosts.
 - [x] `npm run test`, `npm run test:e2e`, `npm run lint`, and `npm run budget` are available as release gates.
 - [ ] Confirm production environment uses Node.js 22+.
 - [ ] Configure `JWT_SECRET`, `APP_URL`, `ALLOWED_ORIGINS`, SMTP, `DATABASE_URL`, OAuth ids, optional Upstash env vars, and optional Sentry DSNs in Vercel.
+- [ ] Configure `VITE_REALTIME_WS_URL` after the dedicated realtime server has a public `wss://` URL.
 - [ ] Verify `/api/health/ready` after deploy.

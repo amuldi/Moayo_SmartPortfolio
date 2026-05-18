@@ -3,8 +3,6 @@ import cors from 'cors'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import { createServer } from 'http'
-import { WebSocketServer, WebSocket } from 'ws'
-import { existsSync, readFileSync } from 'fs'
 import { join, dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { randomBytes, createHash } from 'crypto'
@@ -15,10 +13,12 @@ import { v4 as uuidv4 } from 'uuid'
 import { parse as parseCookie, serialize as serializeCookie } from 'cookie'
 import { OAuth2Client } from 'google-auth-library'
 import * as Sentry from '@sentry/node'
-import { getQuote, getHistory, getChart, getFxRates, toSymbol } from './stockProvider.js'
+import { getQuote, getHistory, getChart, getFxRates } from './stockProvider.js'
 import { ok, fail } from './response.js'
+import { loadLocalEnv } from './env.js'
 import { createJsonRepository } from './repositories/jsonRepository.js'
 import { createPostgresRepository } from './repositories/postgresRepository.js'
+import { attachRealtimeServer } from './realtimeGateway.js'
 import { createDistributedRateLimitStore } from './rateLimitStore.js'
 import {
   sanitizeTicker,
@@ -35,20 +35,7 @@ import {
 const __dirname  = dirname(fileURLToPath(import.meta.url))
 const ROOT_DIR   = resolve(__dirname, '..')
 
-function loadLocalEnv() {
-  for (const file of [join(ROOT_DIR, '.env.local'), join(ROOT_DIR, '.env'), join(__dirname, '.env.local'), join(__dirname, '.env')]) {
-    if (!existsSync(file)) continue
-    for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith('#')) continue
-      const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/)
-      if (!match || process.env[match[1]] !== undefined) continue
-      process.env[match[1]] = match[2].trim().replace(/^['"]|['"]$/g, '')
-    }
-  }
-}
-
-loadLocalEnv()
+loadLocalEnv(ROOT_DIR, __dirname)
 
 const app        = express()
 const PORT       = process.env.PORT       || 4000
@@ -66,6 +53,7 @@ const ACCESS_TOKEN_TTL_SECONDS = 15 * 60
 const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || ''
 const SENTRY_DSN = process.env.SENTRY_DSN || ''
+const REALTIME_WS_URL = process.env.REALTIME_WS_URL || process.env.VITE_REALTIME_WS_URL || ''
 const repository = process.env.DATABASE_URL
   ? createPostgresRepository(process.env.DATABASE_URL)
   : (!IS_PROD ? createJsonRepository(DB_PATH) : null)
@@ -89,10 +77,21 @@ if (SENTRY_DSN) {
 app.set('trust proxy', 1)
 
 // ─── CORS ─────────────────────────────────────────────────
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:3001,http://localhost:3000')
-  .split(',')
-  .map((origin) => origin.trim())
+function normalizeOrigin(origin) {
+  try {
+    return new URL(origin).origin
+  } catch {
+    return null
+  }
+}
+
+const ALLOWED_ORIGINS = [
+  APP_URL,
+  ...(process.env.ALLOWED_ORIGINS || 'http://localhost:3001,http://localhost:3000').split(','),
+]
+  .map((origin) => normalizeOrigin(origin.trim()))
   .filter(Boolean)
+  .filter((origin, index, list) => list.indexOf(origin) === index)
 const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID || process.env.VITE_NAVER_CLIENT_ID || ''
 const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET || ''
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null
@@ -293,7 +292,8 @@ async function findOrCreateOAuthUser(provider, providerId, email, username) {
 }
 
 // ─── Email (Nodemailer) ───────────────────────────────────
-const transporter = process.env.SMTP_USER
+const SMTP_READY = Boolean(process.env.SMTP_USER && process.env.SMTP_PASS)
+const transporter = SMTP_READY
   ? nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.SMTP_PORT) || 587,
@@ -698,7 +698,10 @@ app.get('/api/health', async (_, res) => {
       timestamp: checkedAt,
       storage,
       rateLimit: process.env.UPSTASH_REDIS_REST_URL ? 'distributed' : 'memory',
-      realtime: IS_VERCEL ? 'disabled-on-vercel' : process.env.FINNHUB_API_KEY ? 'websocket' : 'polling',
+      realtime: REALTIME_WS_URL
+        ? 'external-websocket'
+        : IS_VERCEL ? 'rest-polling-on-vercel'
+          : process.env.FINNHUB_API_KEY ? 'embedded-websocket' : 'polling',
     })
   } catch {
     fail(res, 503, '저장소 연결을 확인하지 못했습니다', 'HEALTH_CHECK_FAILED', { timestamp: checkedAt })
@@ -719,6 +722,7 @@ app.get('/api/health/ready', async (_, res) => {
       database: storage.adapter === 'postgres' || !IS_PROD,
       smtp: !IS_PROD || Boolean(transporter),
       migrations: !process.env.DATABASE_URL || storage.migrations >= 1,
+      realtimeEndpoint: !IS_PROD || process.env.VITE_ENABLE_REALTIME_WS !== 'true' || Boolean(REALTIME_WS_URL),
     }
     const ready = Object.values(checks).every(Boolean)
     if (!ready) {
@@ -748,158 +752,9 @@ app.use((err, req, res, _next) => {
   fail(res, status, IS_PROD ? '서버 오류가 발생했습니다' : err.message, 'SERVER_ERROR')
 })
 
-function attachRealtimeServer(server) {
-  const wss = new WebSocketServer({ server, path: '/ws' })
-  let finnhubWs = null
-  const clientSubs = new Map()
-  const tickerSubs = new Map()
-
-  function sendJson(ws, payload) {
-    if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(payload))
-  }
-
-  function broadcastStatus(payload) {
-    for (const ws of clientSubs.keys()) sendJson(ws, { type: 'status', ...payload })
-  }
-
-  function subscribeFinnhub(ticker) {
-    if (finnhubWs?.readyState === WebSocket.OPEN) {
-      finnhubWs.send(JSON.stringify({ type: 'subscribe', symbol: toSymbol(ticker) }))
-    }
-  }
-
-  function unsubscribeFinnhub(ticker) {
-    if (finnhubWs?.readyState === WebSocket.OPEN) {
-      finnhubWs.send(JSON.stringify({ type: 'unsubscribe', symbol: toSymbol(ticker) }))
-    }
-  }
-
-  function ensureFinnhubWs() {
-    const apiKey = process.env.FINNHUB_API_KEY
-    if (!apiKey) return false
-    if (finnhubWs && (finnhubWs.readyState === WebSocket.OPEN || finnhubWs.readyState === WebSocket.CONNECTING)) return true
-
-    finnhubWs = new WebSocket(`wss://ws.finnhub.io?token=${apiKey}`)
-
-    finnhubWs.on('open', () => {
-      console.log('[WS] Finnhub 연결됨')
-      for (const ticker of tickerSubs.keys()) subscribeFinnhub(ticker)
-      broadcastStatus({
-        realtime: true,
-        mode: 'websocket',
-        message: 'Finnhub 실시간 체결가에 연결되었습니다.',
-      })
-    })
-
-    finnhubWs.on('message', (raw) => {
-      let msg
-      try { msg = JSON.parse(raw.toString()) } catch { return }
-      if (msg.type !== 'trade' || !Array.isArray(msg.data)) return
-
-      msg.data.forEach((trade) => {
-        const sym = (trade.s || '').toUpperCase()
-        for (const [ticker, clients] of tickerSubs) {
-          if (toSymbol(ticker).toUpperCase() === sym) {
-            const payload = JSON.stringify({ type: 'trade', ticker, price: trade.p, timestamp: trade.t, volume: trade.v })
-            clients.forEach((c) => {
-              if (c.readyState === WebSocket.OPEN) c.send(payload)
-            })
-          }
-        }
-      })
-    })
-
-    finnhubWs.on('close', () => {
-      console.log('[WS] Finnhub 연결 끊김 - 3초 후 재연결')
-      finnhubWs = null
-      broadcastStatus({
-        realtime: false,
-        mode: 'polling',
-        message: '실시간 연결이 끊겨 REST 자동 갱신으로 전환했습니다.',
-      })
-      if (tickerSubs.size > 0) setTimeout(ensureFinnhubWs, 3000)
-    })
-
-    finnhubWs.on('error', (err) => {
-      console.error('[WS] Finnhub 오류:', err.message)
-      broadcastStatus({
-        realtime: false,
-        mode: 'polling',
-        message: '실시간 시세 연결 오류로 REST 자동 갱신을 사용합니다.',
-      })
-    })
-
-    return true
-  }
-
-  function clientUnsubscribe(ws, ticker) {
-    clientSubs.get(ws)?.delete(ticker)
-    const subs = tickerSubs.get(ticker)
-    if (!subs) return
-    subs.delete(ws)
-    if (subs.size === 0) {
-      tickerSubs.delete(ticker)
-      unsubscribeFinnhub(ticker)
-    }
-  }
-
-  wss.on('connection', (ws) => {
-    clientSubs.set(ws, new Set())
-
-    ws.on('message', (raw) => {
-      let msg
-      try { msg = JSON.parse(raw.toString()) } catch { return }
-
-      if (msg.type === 'subscribe' && msg.ticker) {
-        const { ticker } = msg
-        clientSubs.get(ws)?.add(ticker)
-        if (!tickerSubs.has(ticker)) tickerSubs.set(ticker, new Set())
-        tickerSubs.get(ticker).add(ws)
-        const hasRealtimeProvider = ensureFinnhubWs()
-        if (!hasRealtimeProvider) {
-          sendJson(ws, {
-            type: 'status',
-            realtime: false,
-            mode: 'polling',
-            message: 'FINNHUB_API_KEY가 없어 REST 자동 갱신으로 시세를 표시합니다.',
-          })
-          return
-        }
-
-        if (finnhubWs?.readyState === WebSocket.OPEN) {
-          subscribeFinnhub(ticker)
-          sendJson(ws, {
-            type: 'status',
-            realtime: true,
-            mode: 'websocket',
-            message: '실시간 체결가를 수신 중입니다.',
-          })
-        } else {
-          sendJson(ws, {
-            type: 'status',
-            realtime: false,
-            mode: 'connecting',
-            message: '실시간 시세 연결을 준비 중입니다.',
-          })
-        }
-      }
-
-      if (msg.type === 'unsubscribe' && msg.ticker) {
-        clientUnsubscribe(ws, msg.ticker)
-      }
-    })
-
-    ws.on('close', () => {
-      const tickers = [...(clientSubs.get(ws) || [])]
-      tickers.forEach((t) => clientUnsubscribe(ws, t))
-      clientSubs.delete(ws)
-    })
-  })
-}
-
 export function startServer(port = PORT, host = HOST) {
   const server = createServer(app)
-  attachRealtimeServer(server)
+  if (process.env.ENABLE_EMBEDDED_REALTIME_WS !== 'false') attachRealtimeServer(server)
   server.listen(port, host, () => {
     console.log(`\nMoayo API  http://${host}:${port}`)
     if (!IS_PROD && !transporter) console.log('[DEV] SMTP 미설정 - 인증 링크는 콘솔에 출력됩니다\n')

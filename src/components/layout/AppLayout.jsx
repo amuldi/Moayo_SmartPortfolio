@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { TopNav } from './TopNav.jsx'
 import usePortfolioStore from '../../store/portfolioStore.js'
+import { getRealtimeWebSocketUrl, isRealtimeWebSocketEnabled } from '../../services/realtime.js'
 
 export function AppLayout({ children }) {
   const {
@@ -48,8 +49,7 @@ export function AppLayout({ children }) {
       return
     }
 
-    const realtimeEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_REALTIME_WS === 'true'
-    if (!realtimeEnabled || typeof WebSocket === 'undefined') {
+    if (!isRealtimeWebSocketEnabled() || typeof WebSocket === 'undefined') {
       setRealtimeStatus('polling')
       return
     }
@@ -68,8 +68,7 @@ export function AppLayout({ children }) {
       setRealtimeStatus('connecting')
 
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        ws = new WebSocket(`${protocol}//${window.location.host}/ws`)
+        ws = new WebSocket(getRealtimeWebSocketUrl())
       } catch {
         setRealtimeStatus('polling', '브라우저에서 실시간 연결을 시작하지 못해 REST 자동 갱신으로 표시합니다.')
         return

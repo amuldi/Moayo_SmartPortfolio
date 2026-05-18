@@ -3,6 +3,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceL
 import { RefreshCw, Wifi, WifiOff } from 'lucide-react'
 import { getAssetInfo, getHistoricalPrices } from '../../services/mockData.js'
 import { fetchChart, fetchQuote } from '../../services/stockAPI.js'
+import { getRealtimeWebSocketUrl, isRealtimeWebSocketEnabled } from '../../services/realtime.js'
 import { formatPct } from '../../utils/formatters.js'
 import clsx from 'clsx'
 
@@ -99,8 +100,7 @@ export function StockChart({ ticker, height = 280, initialQuote = null }) {
 
   // WebSocket 실시간 시세 (로컬/전용 서버에서만 사용)
   useEffect(() => {
-    const realtimeEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_REALTIME_WS === 'true'
-    if (range !== '1d' || !realtimeEnabled) {
+    if (range !== '1d' || !isRealtimeWebSocketEnabled()) {
       if (wsRef.current) {
         wsRef.current.close()
         wsRef.current = null
@@ -112,8 +112,7 @@ export function StockChart({ ticker, height = 280, initialQuote = null }) {
     let mounted = true
     let ws
     try {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      ws = new WebSocket(`${protocol}//${window.location.host}/ws`)
+      ws = new WebSocket(getRealtimeWebSocketUrl())
       wsRef.current = ws
 
       ws.onopen = () => {

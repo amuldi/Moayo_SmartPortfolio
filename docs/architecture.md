@@ -21,13 +21,13 @@ flowchart TB
   Auth --> Repo["Repository"]
   Portfolio --> Repo
   Repo --> Postgres["Neon Postgres"]
-  Repo --> Json["Local JSON fallback"]
+  Repo -. "development only" .-> Json["Local JSON fallback"]
 
   Market --> Yahoo["Yahoo Finance REST"]
   Market --> Fx["FX cache"]
 
-  Browser <-. local or dedicated server .-> Ws["/ws WebSocket"]
-  Ws --> Finnhub["Finnhub trades"]
+  Browser <-. "VITE_REALTIME_WS_URL" .-> Realtime["Dedicated realtime server"]
+  Realtime --> Finnhub["Finnhub trades"]
 ```
 
 ## Market Data
@@ -40,7 +40,8 @@ flowchart LR
   Yahoo --> Store["livePrices"]
 
   Holdings --> Subscribe["WebSocket subscribe"]
-  Subscribe --> Finnhub["Finnhub WebSocket"]
+  Subscribe --> Realtime["Dedicated realtime server"]
+  Realtime --> Finnhub["Finnhub WebSocket"]
   Finnhub --> Trade["trade event"]
   Trade --> Apply["applyRealtimeTrade"]
   Apply --> Store
@@ -50,7 +51,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  Local["Local Express Server"] --> WsEnabled["WebSocket enabled"]
+  RealtimeHost["Railway / Render / Fly.io"] --> WsEnabled["npm run realtime"]
   WsEnabled --> Finnhub["Finnhub realtime"]
 
   Vercel["Vercel Functions"] --> RestOnly["REST polling"]

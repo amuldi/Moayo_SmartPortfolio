@@ -9,7 +9,7 @@ Production: https://moayo-smartportfolio.vercel.app
 - 금융앱 느낌의 미니멀 랜딩 페이지
 - 포트폴리오, 리밸런싱, 설정 화면 리디자인
 - 보유 종목과 관심 종목의 현재가 자동 갱신
-- 로컬/전용 서버 환경의 Finnhub WebSocket 실시간 체결가 반영
+- 별도 상주 realtime 서버의 Finnhub WebSocket 실시간 체결가 반영
 - Vercel 환경의 REST 30초 자동 갱신 fallback
 - Figma 캡처용 프리뷰 라우트
 
@@ -68,14 +68,14 @@ flowchart LR
   Auth --> Repo["Repository Layer"]
   PortfolioApi --> Repo
   Repo --> Neon["Neon Postgres"]
-  Repo --> JsonFallback["Local JSON Fallback"]
+  Repo -. development only .-> JsonFallback["Local JSON Fallback"]
 
   MarketApi --> Yahoo["Yahoo Finance REST"]
   MarketApi --> Fx["FX Rate Cache"]
 
-  Browser <-. "/ws local only" .-> WsServer["Express WebSocket Server"]
-  WsServer --> Finnhub["Finnhub WebSocket"]
-  WsServer --> Store
+  Browser <-. "VITE_REALTIME_WS_URL" .-> Realtime["Dedicated Realtime Server"]
+  Realtime --> Finnhub["Finnhub WebSocket"]
+  Realtime --> Store
 
   React --> FigmaRoutes["/figma/* Preview Routes"]
   FigmaRoutes --> Figma["Figma Capture"]
@@ -90,6 +90,7 @@ sequenceDiagram
   participant S as Zustand
   participant A as Express API
   participant Y as Yahoo Finance
+  participant W as Realtime Server
   participant F as Finnhub WS
 
   U->>R: 포트폴리오 화면 진입
@@ -100,11 +101,11 @@ sequenceDiagram
   A-->>R: quotes + fx
   R->>S: livePrices 갱신
 
-  alt FINNHUB_API_KEY가 있는 로컬/전용 서버
-    R->>A: WebSocket /ws subscribe
-    A->>F: symbol subscribe
-    F-->>A: trade tick
-    A-->>R: trade message
+  alt VITE_REALTIME_WS_URL이 등록된 배포 환경
+    R->>W: WebSocket subscribe
+    W->>F: symbol subscribe
+    F-->>W: trade tick
+    W-->>R: trade message
     R->>S: 체결가 즉시 반영
   else Vercel Functions 또는 API 키 없음
     R->>S: 30초 REST 자동 갱신 유지
@@ -123,8 +124,9 @@ sequenceDiagram
 | 인증 | httpOnly cookie, JWT, refresh token rotation, bcryptjs |
 | OAuth | Google, Naver |
 | 시세 | yahoo-finance2, Finnhub WebSocket |
-| 저장소 | Neon Postgres, Local JSON fallback |
+| 저장소 | Neon Postgres, Local JSON fallback(development only) |
 | 배포 | Vercel Static Hosting + Vercel Functions |
+| 실시간 | 별도 Node WebSocket 서버 + Finnhub |
 | 디자인 연동 | Figma capture preview routes |
 
 ## 폴더 구조
@@ -180,6 +182,12 @@ API 서버:
 npm run server
 ```
 
+실시간 서버:
+
+```bash
+npm run realtime
+```
+
 기본 주소:
 
 - Frontend: `http://localhost:3001`
@@ -211,6 +219,7 @@ SMTP_USER=your-email@example.com
 SMTP_PASS=your-app-password
 FINNHUB_API_KEY=your-finnhub-key
 VITE_ENABLE_REALTIME_WS=false
+VITE_REALTIME_WS_URL=
 DATABASE_URL=postgresql://user:password@host:5432/moayo
 UPSTASH_REDIS_REST_URL=https://your-upstash-url.upstash.io
 UPSTASH_REDIS_REST_TOKEN=your-upstash-token
@@ -223,8 +232,9 @@ VITE_SENTRY_DSN=https://examplePublicKey@o0.ingest.sentry.io/0
 - 기본 시세는 Yahoo Finance REST API를 사용합니다.
 - 포트폴리오 화면은 30초마다 자동 갱신합니다.
 - 브라우저 focus, online, visibility 복귀 시 다시 조회합니다.
-- `FINNHUB_API_KEY`가 있는 로컬/전용 Express 서버에서는 `/ws`로 체결가를 즉시 반영합니다.
-- Vercel Functions는 WebSocket 서버를 유지하지 않으므로 배포본은 REST 자동 갱신으로 동작합니다.
+- Vercel Functions는 WebSocket 서버를 유지하지 않습니다.
+- 배포본에서 실시간 체결가를 켜려면 `VITE_REALTIME_WS_URL=wss://.../ws`를 등록하고, 별도 서버에서 `npm run realtime`을 실행합니다.
+- `VITE_REALTIME_WS_URL`이 없으면 배포본은 REST 자동 갱신으로 안전하게 fallback됩니다.
 
 ## Figma 연동
 
@@ -282,11 +292,16 @@ npm run lint
 Vercel 배포 명령:
 
 ```bash
+npm run env:check
+npm run db:migrate
 npx vercel link --project moayo-smartportfolio
 npx vercel deploy --prod
 ```
 
-현재 README와 스크린샷은 최신 로컬 코드 기준입니다. 최신 코드의 실제 배포는 별도 실행이 필요합니다.
+필수 Production 환경변수는 `.env.production.example`을 기준으로 Vercel Project Settings에 등록합니다. OAuth redirect URL은 배포 도메인 기준으로 다음을 등록합니다.
+
+- Naver: `https://moayo-smartportfolio.vercel.app/oauth/naver/callback`
+- Google JavaScript origin: `https://moayo-smartportfolio.vercel.app`
 
 ## 투자 참고 고지
 
